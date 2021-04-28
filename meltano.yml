@@ -22,3 +22,6 @@ plugins:
   - name: target-jsonl
     variant: andyh1203
     pip_url: target-jsonl
+  - name: target-snowflake
+    variant: meltano
+    pip_url: git+https://gitlab.com/meltano/target-snowflake.git
