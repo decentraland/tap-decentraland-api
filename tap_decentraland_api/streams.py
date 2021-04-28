@@ -66,7 +66,7 @@ class TilesStream(DecentralandAPIStream):
 
     path = "/v2/tiles"
 
-    primary_keys = None
+    primary_keys = ['id']
     replication_key = None
     
     schema = PropertiesList(
