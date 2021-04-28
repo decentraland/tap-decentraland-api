@@ -33,8 +33,6 @@ from singer_sdk.typing import (
 
 SCHEMAS_DIR = Path(__file__).parent / Path("./schemas")
 
-
-
 class DecentralandAPIStream(RESTStream):
     """DecentralandAPI stream class."""
 
@@ -63,21 +61,14 @@ class DecentralandAPIStream(RESTStream):
             params["updated"] = starting_datetime
         return params
 
-
-
-
-
-
-
 class TilesStream(DecentralandAPIStream):
     name = "tiles"
 
     path = "/v2/tiles"
 
-    primary_keys = ["id"]
+    primary_keys = []
     replication_key = None
-    # Optionally, you may also use `schema_filepath` in place of `schema`:
-    # schema_filepath = SCHEMAS_DIR / "users.json"
+    
     schema = PropertiesList(
         Property("id", StringType),
         Property("name", StringType),
