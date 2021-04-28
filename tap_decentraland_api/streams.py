@@ -70,7 +70,7 @@ class TilesStream(DecentralandAPIStream):
     replication_key = None
     
     schema = PropertiesList(
-        Property("id", StringType),
+        Property("id", StringType, required=True),
         Property("name", StringType),
         Property("type", StringType),
         Property("x", IntegerType),
