@@ -72,8 +72,3 @@ meltano invoke tap-decentraland-api --version
 # OR run a test `elt` pipeline:
 meltano elt tap-decentraland-api target-jsonl
 ```
-
-### Singer SDK Dev Guide
-
-See the [dev guide](../../docs/dev_guide.md) for more instructions on how to use the Singer SDK to 
-develop your own taps and targets.

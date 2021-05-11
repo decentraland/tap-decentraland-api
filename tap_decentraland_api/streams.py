@@ -41,10 +41,6 @@ class DecentralandAPIStream(RESTStream):
         """Return the API URL root, configurable via tap settings."""
         return self.config["api_url"]
 
-    # Alternatively, use a static string for url_base:
-    # url_base = "https://api.mysample.com"
-
-
     def get_url_params(
         self,
         partition: Optional[dict],
