@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "tap-decentraland-api"
-version = "0.0.1"
+version = "0.1.0"
 description = "`tap-decentraland-api` is Singer tap for DecentralandAPI, built with the Singer SDK."
 authors = ["Pablo Seibelt"]
 license = "Apache 2.0"
@@ -8,7 +8,7 @@ license = "Apache 2.0"
 [tool.poetry.dependencies]
 python = "<3.9,>=3.6"
 requests = "^2.25.1"
-singer-sdk = "0.1.5-dev.1245286412"
+singer-sdk = "^0.2.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.1.2"

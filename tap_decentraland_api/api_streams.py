@@ -41,21 +41,6 @@ class DecentralandAPIStream(RESTStream):
         """Return the API URL root, configurable via tap settings."""
         return self.config["api_url"]
 
-    def get_url_params(
-        self,
-        partition: Optional[dict],
-        next_page_token: Optional[Any] = None
-    ) -> Dict[str, Any]:
-        """Return a dictionary of values to be used in URL parameterization.
-
-        If paging is supported, developers may override this method with specific paging
-        logic.
-        """
-        params = {}
-        starting_datetime = self.get_starting_timestamp(partition)
-        if starting_datetime:
-            params["updated"] = starting_datetime
-        return params
 
 class TilesStream(DecentralandAPIStream):
     name = "tiles"

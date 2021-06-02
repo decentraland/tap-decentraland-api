@@ -15,13 +15,18 @@ from singer_sdk.typing import (
     Property,
     StringType,
 )
-from tap_decentraland_api.streams import (
-    DecentralandAPIStream,
+from tap_decentraland_api.api_streams import (
     TilesStream,
+)
+from tap_decentraland_api.snapshot_dao_streams import (
+    SnapshotProposalsStream,
+    SnapshotVotesStream,
 )
 
 STREAM_TYPES = [
     TilesStream,
+    SnapshotProposalsStream,
+    SnapshotVotesStream,
 ]
 
 
@@ -31,7 +36,8 @@ class TapDecentralandAPI(Tap):
     name = "tap-decentraland-api"
 
     config_jsonschema = PropertiesList(
-        Property("api_url", StringType, default="https://api.decentraland.net"),
+        Property("api_url", StringType, default="https://api.decentraland.org"),
+        Property("governance_api_url", StringType, default="https://governance.decentraland.org/api"),
     ).to_dict()
 
 
