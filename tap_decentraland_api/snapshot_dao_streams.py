@@ -118,7 +118,6 @@ class SnapshotProposalsStream(SnapshotDaoStream):
         # Escape backslashes   
         row['snapshot_proposal']['name'] = escape_backslashes(row['snapshot_proposal'].get('name'))
         row['snapshot_proposal']['body'] = escape_backslashes(row['snapshot_proposal'].get('body'))
-        row['snapshot_proposal']['choices'] = [escape_backslashes(x) for x in row['snapshot_proposal']['choices']]
         row['title'] = escape_backslashes(row.get('title'))
         row['description'] = escape_backslashes(row.get('description'))
         row['enacted_description'] = escape_backslashes(row.get('enacted_description'))
@@ -127,6 +126,9 @@ class SnapshotProposalsStream(SnapshotDaoStream):
         row['configuration']['specification'] = escape_backslashes(row['configuration'].get('specification'))
         row['configuration']['personnel'] = escape_backslashes(row['configuration'].get('personnel'))
         row['configuration']['roadmap'] = escape_backslashes(row['configuration'].get('roadmap'))
+
+        # Convert to PSV
+        row['snapshot_proposal']['choices'] = "|".join([escape_backslashes(x).replace('|', '_') for x in row['snapshot_proposal']['choices']])
 
         return row
 
@@ -145,7 +147,7 @@ class SnapshotProposalsStream(SnapshotDaoStream):
         Property("snapshot_proposal", ObjectType(
             Property("name", StringType),
             Property("body", StringType),
-            Property("choices", ArrayType(StringType)),
+            Property("choices", StringType),
             Property("snapshot", IntegerType),
             Property("start", IntegerType),
             Property("end", IntegerType),
@@ -221,7 +223,8 @@ class SnapshotVotesStream(SnapshotDaoChildStream):
                             "proposal_id": proposal,
                             "voter": voter,
                             "choice": vote.get('choice'),
-                            "voting_power": vote.get('vp')
+                            "voting_power": vote.get('vp'),
+                            "timestamp": vote.get('timestamp')
                             }
         except Exception as err:
             self.logger.warn(f"(stream: {self.name}) Problem with response: {resp_json}")
@@ -233,4 +236,5 @@ class SnapshotVotesStream(SnapshotDaoChildStream):
         Property("voter", StringType, required=True),
         Property("choice", IntegerType),
         Property("voting_power", IntegerType),
+        Property("timestamp", IntegerType),
     ).to_dict()
