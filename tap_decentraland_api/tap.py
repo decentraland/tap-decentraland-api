@@ -29,9 +29,9 @@ from tap_decentraland_api.aragon_dao_streams import (
 )
 
 STREAM_TYPES = [
-    #TilesStream,
-    #SnapshotProposalsStream,
-    #SnapshotVotesStream,
+    TilesStream,
+    SnapshotProposalsStream,
+    SnapshotVotesStream,
     AragonProposalsStream
 ]
 
