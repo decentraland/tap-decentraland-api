@@ -1,6 +1,7 @@
 from eth_typing import HexStr
 import glob, os, json
 import eth_utils
+import logging
 
 CALLSCRIPT_ID = '0x00000001'
 FORWARD_CALL_SIG="d948d468"
@@ -84,26 +85,22 @@ def decodeForwardingPath(script):
 
 def get_methods(app):
     filename = f"{METADATA_PATH}/{app}.json"
-    with open(filename) as f:
-        json_artifact = json.load(f)
-    return json_artifact["functions"]
-
-
-def get_abi(app):
-    filename = f"{METADATA_PATH}/{app}.json"
-    with open(filename) as f:
-        json_artifact = json.load(f)
-    return json_artifact["functions"]
+    if(os.path.exists(filename)):
+        with open(filename) as f:
+            json_artifact = json.load(f)
+            return json_artifact["functions"]
+    else:
+        print(f"ERR: file {filename} not found")
+        return []
+    
 
 
 
 def findAppMethod(step, methods, provider):
     foundMethods = None
-    foundAbi = None
     for appAddr, appMethods in methods.items():
         if(step['to']) == appAddr:
             foundMethods = appMethods
-            foundAbi = get_abi(appAddr)
             break
     foundMethod = None
     methodId = step['data'][:10]
@@ -114,19 +111,15 @@ def findAppMethod(step, methods, provider):
                 methodSig = f"0x{eth_utils.keccak(text=m['sig']).hex()[:8]}"
                 if methodSig == methodId:
                     foundMethod = m
-                    if 'abi' in m:
-                        foundAbi = m['abi']
                     break
     
-    return {"method": foundMethod, "abi": foundAbi}
+    return {"method": foundMethod}
 
 def evaluateRadSpec(step, methods, provider):
     foundAppMethod = findAppMethod(step, methods, provider)
     if not foundAppMethod:
         return ''
     method = foundAppMethod['method']
-    abi = foundAppMethod['abi']
-    evaluatedNotice = None
     if method and 'notice' in method:
         return method['notice']
     return ''
@@ -156,15 +149,15 @@ def friendlyDescription(path, level):
             
     return outString
 
-def decodeScript(script):
-    apps_artifacts = glob.glob(f"{METADATA_PATH}/*.json")
-    apps = [os.path.basename(f).split('.')[0] for f in apps_artifacts]
+apps_artifacts = glob.glob(f"{METADATA_PATH}/*.json")
+apps = [os.path.basename(f).split('.')[0] for f in apps_artifacts]
+methods = dict((app, get_methods(app)) for app in apps)
 
-    methods = dict((app, get_methods(app)) for app in apps)
-
+def decodeScript(script: str) -> str:
     decodedPath = decodeForwardingPath(script)
-
+    
     describedPath = describePath(decodedPath, methods, '')
-
+    #logging.info(describedPath)
     result = friendlyDescription(describedPath, 0)
+    #logging.info(f"Result: {result}")
     return result
