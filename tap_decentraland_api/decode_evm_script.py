@@ -5,7 +5,7 @@ import logging
 
 CALLSCRIPT_ID = '0x00000001'
 FORWARD_CALL_SIG="d948d468"
-METADATA_PATH = "aragon_metadata/artifacts"
+METADATA_PATH = "tap_decentraland_api/aragon_metadata/artifacts"
 
 def decodeSegment(seg):
     # First 40 characters are address

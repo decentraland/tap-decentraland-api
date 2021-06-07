@@ -54,10 +54,12 @@ class AragonDaoStream(GraphQLStream):
         """Return token identifying next page or None if all records have been read."""
         
         resp_json = response.json()
-        results = resp_json["data"]
+        results = resp_json["data"][self.object_returned]
         results_len = len(results)
 
         old_token = previous_token or 0
+        self.logger.info(f"Old token: {old_token}")
+        self.logger.info(f"Results: {results_len}")
         
         if results_len == self.RESULTS_PER_PAGE:
             next_page_token = old_token + self.RESULTS_PER_PAGE
@@ -93,7 +95,7 @@ class AragonProposalsStream(AragonDaoStream):
 
         votes (
             first: $limit,
-            offset: $offset,
+            skip: $offset,
             orderBy: startDate,
             orderDirection: asc,
             where:{
