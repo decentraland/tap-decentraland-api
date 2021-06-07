@@ -2,10 +2,10 @@ from eth_typing import HexStr
 import glob, os, json
 import eth_utils
 import logging
+import importlib.resources
 
 CALLSCRIPT_ID = '0x00000001'
 FORWARD_CALL_SIG="d948d468"
-METADATA_PATH = "tap_decentraland_api/aragon_metadata/artifacts"
 
 def decodeSegment(seg):
     # First 40 characters are address
@@ -81,18 +81,19 @@ def decodeForwardingPath(script):
 
     return decodedPath
 
-
+def get_apps():
+    filename = "apps.json"
+    with importlib.resources.path("tap_decentraland_api.aragon_metadata", filename) as data_path:
+        with open(data_path) as f:
+            apps = json.load(f)
+            return apps
 
 def get_methods(app):
-    filename = f"{METADATA_PATH}/{app}.json"
-    if(os.path.exists(filename)):
-        with open(filename) as f:
+    filename = f"{app}.json"
+    with importlib.resources.path("tap_decentraland_api.aragon_metadata.artifacts", filename) as data_path:
+        with open(data_path) as f:
             json_artifact = json.load(f)
             return json_artifact["functions"]
-    else:
-        print(f"ERR: file {filename} not found")
-        return []
-    
 
 
 
@@ -149,8 +150,7 @@ def friendlyDescription(path, level):
             
     return outString
 
-apps_artifacts = glob.glob(f"{METADATA_PATH}/*.json")
-apps = [os.path.basename(f).split('.')[0] for f in apps_artifacts]
+apps = get_apps()
 methods = dict((app, get_methods(app)) for app in apps)
 
 def decodeScript(script: str) -> str:
