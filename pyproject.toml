@@ -9,6 +9,8 @@ license = "Apache 2.0"
 python = "<3.9,>=3.6"
 requests = "^2.25.1"
 singer-sdk = "^0.2.0"
+eth_utils = "^1.10.0"
+pycryptodome = "^3.10.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.1.2"

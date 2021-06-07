@@ -11,14 +11,6 @@ from typing import Any, Dict, Optional, Union, List, Iterable
 from singer_sdk.streams import RESTStream
 
 
-
-from singer_sdk.authenticators import (
-    APIAuthenticatorBase,
-    SimpleAuthenticator,
-    OAuthAuthenticator,
-    OAuthJWTAuthenticator
-)
-
 from singer_sdk.typing import (
     ArrayType,
     BooleanType,
@@ -44,7 +36,7 @@ class SnapshotDaoStream(RESTStream):
     @property
     def url_base(self) -> str:
         """Return the API URL root, configurable via tap settings."""
-        return self.config["governance_api_url"]
+        return self.config["governance_snapshot_api_url"]
 
 
     def parse_response(self, response) -> Iterable[dict]:
@@ -98,12 +90,12 @@ class SnapshotDaoChildStream(RESTStream):
     @property
     def url_base(self) -> str:
         """Return the API URL root, configurable via tap settings."""
-        return self.config["governance_api_url"]
+        return self.config["governance_snapshot_api_url"]
 
 
 
 class SnapshotProposalsStream(SnapshotDaoStream):
-    name = "snapshot_proposals"
+    name = "dao_snapshot_proposals"
 
     path = "/proposals"
 
@@ -194,7 +186,7 @@ class SnapshotProposalsStream(SnapshotDaoStream):
 
 
 class SnapshotVotesStream(SnapshotDaoChildStream):
-    name = "snapshot_votes"
+    name = "dao_snapshot_votes"
 
     path = "/votes"
 

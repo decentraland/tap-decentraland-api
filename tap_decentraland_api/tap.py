@@ -18,15 +18,21 @@ from singer_sdk.typing import (
 from tap_decentraland_api.api_streams import (
     TilesStream,
 )
+
 from tap_decentraland_api.snapshot_dao_streams import (
     SnapshotProposalsStream,
     SnapshotVotesStream,
 )
 
+from tap_decentraland_api.aragon_dao_streams import (
+    AragonProposalsStream,
+)
+
 STREAM_TYPES = [
-    TilesStream,
-    SnapshotProposalsStream,
-    SnapshotVotesStream,
+    #TilesStream,
+    #SnapshotProposalsStream,
+    #SnapshotVotesStream,
+    AragonProposalsStream
 ]
 
 
@@ -37,7 +43,8 @@ class TapDecentralandAPI(Tap):
 
     config_jsonschema = PropertiesList(
         Property("api_url", StringType, default="https://api.decentraland.org"),
-        Property("governance_api_url", StringType, default="https://governance.decentraland.org/api"),
+        Property("governance_snapshot_api_url", StringType, default="https://governance.decentraland.org/api"),
+        Property("governance_aragon_api_url", StringType, default="https://api.thegraph.com/subgraphs/name/aragon/aragon-voting-mainnet"),
     ).to_dict()
 
 
