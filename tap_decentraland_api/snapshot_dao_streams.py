@@ -190,7 +190,7 @@ class SnapshotVotesStream(SnapshotDaoChildStream):
 
     path = "/votes"
 
-    primary_keys = ['proposal_id']
+    primary_keys = ['rowId']
     replication_key = None
     ignore_parent_replication_keys = True
 
@@ -222,9 +222,15 @@ class SnapshotVotesStream(SnapshotDaoChildStream):
             self.logger.warn(f"(stream: {self.name}) Problem with response: {resp_json}")
             raise err
     
+    def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
+        """Generate row id"""
+        row['rowId'] = "|".join([row['proposal_id'],row['voter']])
+
+        return row
     
     schema = PropertiesList(
         Property("proposal_id", StringType, required=True),
+        Property("rowId", StringType, required=True),
         Property("voter", StringType, required=True),
         Property("choice", IntegerType),
         Property("voting_power", IntegerType),
