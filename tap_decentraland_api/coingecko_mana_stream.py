@@ -70,12 +70,12 @@ class CoingeckoTokenStream(RESTStream):
             # Cycle until get_next_page_token() no longer returns a value
             finished = not next_page_token
             if not finished:
-                time.sleep(0.1) # Wait 0.1s before next request
+                time.sleep(0.2) # Wait 0.2s before next request
 
     @backoff.on_exception(
         backoff.expo,
         (requests.exceptions.RequestException),
-        max_tries=7,
+        max_tries=8,
         giveup=lambda e: e.response is not None and 400 <= e.response.status_code < 500 and e.response.status_code != 429,
         factor=2,
     )
@@ -100,6 +100,12 @@ class CoingeckoTokenStream(RESTStream):
             )
             raise RuntimeError(
                 "Requested resource was unauthorized, forbidden, or not found."
+            )
+        if response.status_code == 429:
+            self.logger.info("Throttled request for {}".format(prepared_request.url))
+            raise requests.exceptions.RequestException(
+                request=prepared_request,
+                response=response
             )
         elif response.status_code >= 400:
             raise RuntimeError(
