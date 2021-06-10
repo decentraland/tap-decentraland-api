@@ -2,6 +2,7 @@
 
 from pathlib import Path
 from typing import List
+from datetime import datetime
 
 from singer_sdk import Tap, Stream
 from singer_sdk.typing import (
@@ -28,11 +29,16 @@ from tap_decentraland_api.aragon_dao_streams import (
     AragonProposalsStream,
 )
 
+from tap_decentraland_api.coingecko_mana_stream import (
+    CoingeckoManaStream,
+)
+
 STREAM_TYPES = [
     TilesStream,
     SnapshotProposalsStream,
     SnapshotVotesStream,
-    AragonProposalsStream
+    AragonProposalsStream,
+    CoingeckoManaStream
 ]
 
 
@@ -45,6 +51,8 @@ class TapDecentralandAPI(Tap):
         Property("api_url", StringType, default="https://api.decentraland.org"),
         Property("governance_snapshot_api_url", StringType, default="https://governance.decentraland.org/api"),
         Property("governance_aragon_api_url", StringType, default="https://api.thegraph.com/subgraphs/name/aragon/aragon-voting-mainnet"),
+        Property("coingecko_url", StringType, default="https://api.coingecko.com/api/v3"),
+        Property("coingecko_start_date", DateTimeType, default="2017-10-28"),
     ).to_dict()
 
 
