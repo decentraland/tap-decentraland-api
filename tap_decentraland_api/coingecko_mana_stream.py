@@ -116,6 +116,8 @@ class CoingeckoManaStream(CoingeckoTokenStream):
             row['price_usd'] = market_data.get('current_price').get('usd')
             row['market_cap_usd'] = market_data.get('market_cap').get('usd')
             row['total_volume_usd'] = market_data.get('total_volume').get('usd')
+        
+        row['date'] = row['date'].strftime("%Y-%m-%d")
         return row
 
 
