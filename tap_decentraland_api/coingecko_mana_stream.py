@@ -124,7 +124,7 @@ class CoingeckoTokenStream(RESTStream):
         """Return token identifying next page or None if all records have been read."""
         
 
-        old_token = previous_token or self.get_starting_replication_key_value(context) or cast(datetime, pendulum.parse(self.config["coingecko_start_date"]))
+        old_token = previous_token or cast(datetime, pendulum.parse(self.get_starting_replication_key_value(context)) or cast(datetime, pendulum.parse(self.config["coingecko_start_date"]))
         signpost = self.get_replication_key_signpost(context)
         
         if old_token < signpost:
