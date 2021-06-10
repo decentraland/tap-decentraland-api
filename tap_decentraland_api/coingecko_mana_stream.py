@@ -50,6 +50,8 @@ class CoingeckoTokenStream(RESTStream):
         If pagination is detected, pages will be recursed automatically.
         """
         next_page_token: Any = self.get_next_page_token(None, None, context)
+        if not next_page_token:
+            return
         finished = False
         while not finished:
             prepared_request = self.prepare_request(
