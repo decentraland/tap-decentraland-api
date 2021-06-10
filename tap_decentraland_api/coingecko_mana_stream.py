@@ -165,7 +165,7 @@ class CoingeckoManaStream(CoingeckoTokenStream):
 
 
     schema = PropertiesList(
-        Property("date", DateTimeType, required=True),
+        Property("date", StringType, required=True),
         Property("price_usd", NumberType),
         Property("market_cap_usd", NumberType),
         Property("total_volume_usd", NumberType),
