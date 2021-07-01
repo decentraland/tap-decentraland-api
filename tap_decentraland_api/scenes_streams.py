@@ -163,7 +163,7 @@ class SceneStream(DecentralandStreamAPIStream):
     schema = PropertiesList(
         Property("scene_hash", StringType, required=True),
         Property("type", StringType),
-        Property("timestamp", DateTimeType),
+        Property("timestamp", IntegerType),
         Property("content_files", StringType),
         Property("content_files_hashes", StringType),
         Property("type", StringType),
