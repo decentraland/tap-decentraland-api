@@ -33,12 +33,21 @@ from tap_decentraland_api.coingecko_mana_stream import (
     CoingeckoManaStream,
 )
 
+from tap_decentraland_api.scenes_streams import (
+    SceneSnapshotStream,
+    SceneMappingStream,
+    SceneStream,
+)
+
 STREAM_TYPES = [
     TilesStream,
     SnapshotProposalsStream,
     SnapshotVotesStream,
     AragonProposalsStream,
-    CoingeckoManaStream
+    CoingeckoManaStream,
+    SceneSnapshotStream,
+    SceneMappingStream,
+    SceneStream,
 ]
 
 
@@ -49,6 +58,7 @@ class TapDecentralandAPI(Tap):
 
     config_jsonschema = PropertiesList(
         Property("api_url", StringType, default="https://api.decentraland.org"),
+        Property("peer_api_url", StringType, default="https://peer.decentraland.org"),
         Property("governance_snapshot_api_url", StringType, default="https://governance.decentraland.org/api"),
         Property("governance_aragon_api_url", StringType, default="https://api.thegraph.com/subgraphs/name/aragon/aragon-voting-mainnet"),
         Property("coingecko_url", StringType, default="https://api.coingecko.com/api/v3"),
