@@ -116,6 +116,8 @@ class SceneStream(DecentralandStreamAPIStream):
 
     primary_keys = ['scene_hash']
     parent_stream_type = SceneMappingStream
+    replication_method = "INCREMENTAL"
+    replication_key = 'scene_hash'
     
 
     def get_url_params(self, context, next_page_token: Optional[IntegerType] = None) -> dict:
