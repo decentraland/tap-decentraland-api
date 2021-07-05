@@ -72,7 +72,7 @@ class SnapshotDaoStream(RESTStream):
 
     def get_url_params(
         self,
-        partition: Optional[dict],
+        context: Optional[dict],
         next_page_token: Optional[Any] = None
     ) -> Dict[str, Any]:
         offset = 0
@@ -198,9 +198,9 @@ class SnapshotVotesStream(SnapshotDaoChildStream):
     parent_stream_type = SnapshotProposalsStream
 
 
-    def get_url_params(self, partition, next_page_token: Optional[IntegerType] = None) -> dict:
+    def get_url_params(self, context, next_page_token: Optional[IntegerType] = None) -> dict:
         return {
-            "id": partition['proposalId']
+            "id": context['proposalId']
         }
     
 

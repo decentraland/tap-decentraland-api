@@ -118,9 +118,9 @@ class SceneStream(DecentralandStreamAPIStream):
     parent_stream_type = SceneMappingStream
     
 
-    def get_url_params(self, partition, next_page_token: Optional[IntegerType] = None) -> dict:
+    def get_url_params(self, context, next_page_token: Optional[IntegerType] = None) -> dict:
         return {
-            "id": partition['scene_hash']
+            "id": context['scene_hash']
         }
 
     def parse_response(self, response) -> Iterable[dict]:
@@ -136,12 +136,8 @@ class SceneStream(DecentralandStreamAPIStream):
         row['scene_hash'] = row['id']
         del row['id']
 
-        files_array = [c['file'] for c in row['content']]
-        hashes_array = [c['file'] for c in row['content']]
-
-        row['content_files'] = json.dumps(files_array)
-        row['content_files_hashes'] = json.dumps(hashes_array)
-
+        row['content_files'] = len(row['content'])
+        
         # Flatten some properties into json strings
         metadata = row.get('metadata')
         if metadata:
@@ -166,8 +162,7 @@ class SceneStream(DecentralandStreamAPIStream):
         Property("scene_hash", StringType, required=True),
         Property("type", StringType),
         Property("timestamp", IntegerType),
-        Property("content_files", StringType),
-        Property("content_files_hashes", StringType),
+        Property("content_files", IntegerType),
         Property("type", StringType),
         Property("metadata", ObjectType(
             Property("display", ObjectType(

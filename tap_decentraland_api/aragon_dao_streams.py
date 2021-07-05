@@ -72,7 +72,7 @@ class AragonDaoStream(GraphQLStream):
 
     def get_url_params(
         self,
-        partition: Optional[dict],
+        context: Optional[dict],
         next_page_token: Optional[Any] = None
     ) -> Dict[str, Any]:
         offset = 0

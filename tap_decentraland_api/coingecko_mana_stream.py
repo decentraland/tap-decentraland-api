@@ -151,7 +151,7 @@ class CoingeckoManaStream(CoingeckoTokenStream):
 
     def get_url_params(
         self,
-        partition: Optional[dict],
+        context: Optional[dict],
         next_page_token: Optional[Any] = None
     ) -> Dict[str, Any]:
         return {"date": next_page_token.strftime('%d-%m-%Y'), "localization": "false"}
