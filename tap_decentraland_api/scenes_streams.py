@@ -79,12 +79,14 @@ class SceneMappingStream(DecentralandStreamAPIStream):
 
     primary_keys = ['global_hash', 'scene_hash']
     parent_stream_type = SceneSnapshotStream
+    replication_method = "INCREMENTAL"
+    replication_key = 'scene_hash'
     
     def parse_response(self, response) -> Iterable[dict]:
         """Parse data"""
 
         data =response.json()
-        for d in data:
+        for d in data[0:150]:
             row = {'scene_hash': d[0], 'parcels': d[1]}
             yield row
 
@@ -118,8 +120,22 @@ class SceneStream(DecentralandStreamAPIStream):
     parent_stream_type = SceneMappingStream
     replication_method = "INCREMENTAL"
     replication_key = 'scene_hash'
-    
 
+    def request_records(self, context: Optional[dict]) -> Iterable[dict]:
+        """Need to override to avoid reprocessing data
+        """
+        replication_key = self.get_starting_replication_key_value(context)
+        if replication_key is None:
+            prepared_request = self.prepare_request(
+                context, next_page_token=None
+            )
+            resp = self._request_with_backoff(prepared_request, context)
+            for row in self.parse_response(resp):
+                yield row
+        else:
+            # Do not download the same scene hash twice
+            return []
+        
     def get_url_params(self, context, next_page_token: Optional[IntegerType] = None) -> dict:
         return {
             "id": context['scene_hash']
