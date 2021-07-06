@@ -86,7 +86,7 @@ class SceneMappingStream(DecentralandStreamAPIStream):
         """Parse data"""
 
         data =response.json()
-        for d in data[0:150]:
+        for d in data:
             row = {'scene_hash': d[0], 'parcels': d[1]}
             yield row
 
