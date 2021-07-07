@@ -5,7 +5,7 @@ import requests, json
 
 
 from pathlib import Path
-from typing import Any, Dict, Optional, Union, List, Iterable
+from typing import Any, Dict, Optional, Union, List, Iterable, cast
 
 
 from singer_sdk.streams import RESTStream
@@ -79,8 +79,6 @@ class SceneMappingStream(DecentralandStreamAPIStream):
 
     primary_keys = ['global_hash', 'scene_hash']
     parent_stream_type = SceneSnapshotStream
-    replication_method = "INCREMENTAL"
-    replication_key = 'scene_hash'
     
     def parse_response(self, response) -> Iterable[dict]:
         """Parse data"""
@@ -95,12 +93,6 @@ class SceneMappingStream(DecentralandStreamAPIStream):
         """Add hash"""
         row['global_hash'] = context['hash']
         return row
-
-    def get_child_context(self, record: dict, context: Optional[dict]) -> dict:
-        """Return a context dictionary for child streams."""
-        return {
-            "scene_hash": record['scene_hash']
-        }
 
     schema = PropertiesList(
         Property("global_hash", StringType, required=True),
@@ -117,29 +109,68 @@ class SceneStream(DecentralandStreamAPIStream):
     path = "/content/entities/scene"
 
     primary_keys = ['scene_hash']
-    parent_stream_type = SceneMappingStream
-    replication_method = "INCREMENTAL"
-    replication_key = 'scene_hash'
 
     def request_records(self, context: Optional[dict]) -> Iterable[dict]:
         """Need to override to avoid reprocessing data
         """
-        replication_key = self.get_starting_replication_key_value(context)
-        if replication_key is None:
-            prepared_request = self.prepare_request(
-                context, next_page_token=None
-            )
-            resp = self._request_with_backoff(prepared_request, context)
-            for row in self.parse_response(resp):
-                yield row
-        else:
-            # Do not download the same scene hash twice
-            return []
+        state = self.get_context_state(context)
+        scene_hashes = []
+        if 'scene_hashes' in state:
+            scene_hashes = state['scene_hashes']
+        r_snapshot = requests.get(f'{self.url_base}/content/snapshot/scene')
+        snapshot = r_snapshot.json()
+
+        r_mapping = requests.get(f'{self.url_base}/content/contents/{ snapshot["hash"] }')
+        mapping = r_mapping.json()
+        i=0
+        for h in mapping:
+            hash = h[0]
+            if hash not in scene_hashes and i < self.config['scenes_per_run']:
+                prepared_request = self.prepare_request(
+                    {"id": hash}, context, next_page_token=None
+                )
+                resp = self._request_with_backoff(prepared_request, context)
+                for row in self.parse_response(resp):
+                    yield row
+                i+=1
+                scene_hashes.append(hash)
         
-    def get_url_params(self, context, next_page_token: Optional[IntegerType] = None) -> dict:
-        return {
-            "id": context['scene_hash']
-        }
+        state['scene_hashes'] = scene_hashes
+    
+
+    def prepare_request(
+        self, params: dict, context: Optional[dict], next_page_token: Optional[Any]
+    ) -> requests.PreparedRequest:
+        """Prepare a request object.
+
+        If partitioning is supported, the `context` object will contain the partition
+        definitions. Pagination information can be parsed from `next_page_token` if
+        `next_page_token` is not None.
+        """
+        http_method = self.rest_method
+        url: str = self.get_url(context)
+        request_data = self.prepare_request_payload(context, next_page_token)
+        headers = self.http_headers
+
+        authenticator = self.authenticator
+        if authenticator:
+            headers.update(authenticator.auth_headers or {})
+
+        request = cast(
+            requests.PreparedRequest,
+            self.requests_session.prepare_request(
+                requests.Request(
+                    method=http_method,
+                    url=url,
+                    params=params,
+                    headers=headers,
+                    json=request_data,
+                )
+            ),
+        )
+        return request
+
+
 
     def parse_response(self, response) -> Iterable[dict]:
         """Parse data"""
