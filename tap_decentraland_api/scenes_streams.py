@@ -109,23 +109,31 @@ class SceneStream(DecentralandStreamAPIStream):
     path = "/content/entities/scene"
 
     primary_keys = ['scene_hash']
+    replication_key = None
+
 
     def request_records(self, context: Optional[dict]) -> Iterable[dict]:
         """Need to override to avoid reprocessing data
         """
         state = self.get_context_state(context)
-        scene_hashes = []
+        
         if 'scene_hashes' in state:
-            scene_hashes = state['scene_hashes']
+            self.logger.warn(f"(stream: {self.name}) Skipping any hash matching {len(state['scene_hashes'])} saved hashes")
+        else:
+            self.logger.warn(f"(stream: {self.name}) No existing hashes saved, full sync")
+            state['scene_hashes'] = []
+
         r_snapshot = requests.get(f'{self.url_base}/content/snapshot/scene')
         snapshot = r_snapshot.json()
 
         r_mapping = requests.get(f'{self.url_base}/content/contents/{ snapshot["hash"] }')
         mapping = r_mapping.json()
+
         i=0
+        skip=0
         for h in mapping:
             hash = h[0]
-            if hash not in scene_hashes and i < self.config['scenes_per_run']:
+            if hash not in state['scene_hashes'] and i < self.config['scenes_per_run']:
                 prepared_request = self.prepare_request(
                     {"id": hash}, context, next_page_token=None
                 )
@@ -133,9 +141,12 @@ class SceneStream(DecentralandStreamAPIStream):
                 for row in self.parse_response(resp):
                     yield row
                 i+=1
-                scene_hashes.append(hash)
-        
-        state['scene_hashes'] = scene_hashes
+                state['scene_hashes'].append(hash)
+                if skip>0:
+                    self.logger.warn(f"(stream: {self.name}) Skipped {skip} hashes")
+                    skip=0
+            else:
+                skip+=1
     
 
     def prepare_request(
@@ -151,10 +162,6 @@ class SceneStream(DecentralandStreamAPIStream):
         url: str = self.get_url(context)
         request_data = self.prepare_request_payload(context, next_page_token)
         headers = self.http_headers
-
-        authenticator = self.authenticator
-        if authenticator:
-            headers.update(authenticator.auth_headers or {})
 
         request = cast(
             requests.PreparedRequest,
