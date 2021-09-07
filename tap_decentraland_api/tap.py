@@ -58,7 +58,7 @@ class TapDecentralandAPI(Tap):
 
     config_jsonschema = PropertiesList(
         Property("api_url", StringType, default="https://api.decentraland.org"),
-        Property("peer_api_url", StringType, default="https://peer.decentraland.org"),
+        Property("peer_api_url", StringType, default="https://peer-lb.decentraland.org"),
         Property("scenes_per_run", IntegerType, default=2000),
         Property("governance_snapshot_api_url", StringType, default="https://governance.decentraland.org/api"),
         Property("governance_aragon_api_url", StringType, default="https://api.thegraph.com/subgraphs/name/aragon/aragon-voting-mainnet"),
