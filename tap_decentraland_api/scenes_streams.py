@@ -202,6 +202,8 @@ class SceneStream(DecentralandStreamAPIStream):
             if 'scene' in metadata:
                 if 'parcels' in metadata['scene']:
                     row['metadata']['scene']['parcels'] = json.dumps(metadata['scene']['parcels'])
+                if 'base' in metadata['scene']:
+                    row['metadata']['scene']['base'] = json.dumps(metadata['scene']['base'])
             if 'policy' in metadata:
                 if 'blacklist' in metadata['policy']:
                     row['metadata']['policy']['blacklist'] = json.dumps(metadata['policy']['blacklist'])
