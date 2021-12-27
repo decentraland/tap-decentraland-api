@@ -9,7 +9,6 @@ from typing import Any, Dict, Optional, Union, List, Iterable, cast
 from singer_sdk.streams import RESTStream
 
 
-
 from singer_sdk.authenticators import (
     APIAuthenticatorBase,
     SimpleAuthenticator,

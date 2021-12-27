@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Union, List, Iterable
 
 
-from singer_sdk.streams import RESTStream
+from tap_decentraland_api.client import BaseAPIStream
 
 
 from singer_sdk.typing import (
@@ -29,7 +29,7 @@ def escape_backslashes(variable):
 
 SCHEMAS_DIR = Path(__file__).parent / Path("./schemas")
 
-class SnapshotDaoStream(RESTStream):
+class SnapshotDaoStream(BaseAPIStream):
 
     RESULTS_PER_PAGE = 100
 
@@ -83,7 +83,7 @@ class SnapshotDaoStream(RESTStream):
 
 
 
-class SnapshotDaoChildStream(RESTStream):
+class SnapshotDaoChildStream(BaseAPIStream):
 
     RESULTS_PER_PAGE = 100
 
