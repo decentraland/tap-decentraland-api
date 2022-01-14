@@ -1,7 +1,7 @@
 """Stream class for tap-decentraland-api."""
 
 
-import requests, backoff
+import requests, backoff, time
 
 
 from pathlib import Path
@@ -17,9 +17,9 @@ class BaseAPIStream(RESTStream):
     @backoff.on_exception(
         backoff.expo,
         (requests.exceptions.RequestException),
-        max_tries=8,
+        max_tries=10,
         giveup=lambda e: e.response is not None and 400 <= e.response.status_code < 500 and e.response.status_code != 429,
-        factor=2,
+        factor=3,
     )
     def _request_with_backoff(
         self, prepared_request, context: Optional[dict]
