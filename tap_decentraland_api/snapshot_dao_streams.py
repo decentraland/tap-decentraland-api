@@ -247,6 +247,7 @@ class SnapshotVotesStream(SnapshotDaoChildStream):
     def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
         """Generate row id"""
         row['rowId'] = "|".join([row['proposal_id'],row['voter']])
+        row['timestamp'] = datetime.datetime.fromtimestamp(row['timestamp'])
 
         return row
     
@@ -256,5 +257,5 @@ class SnapshotVotesStream(SnapshotDaoChildStream):
         Property("voter", StringType, required=True),
         Property("choice", IntegerType),
         Property("voting_power", IntegerType),
-        Property("timestamp", IntegerType),
+        Property("timestamp", DateTimeType),
     ).to_dict()
