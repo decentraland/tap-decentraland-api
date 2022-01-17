@@ -1,6 +1,7 @@
 """Stream class for tap-decentraland-api."""
 
 
+import datetime, time
 import requests
 
 
@@ -78,7 +79,6 @@ class SnapshotDaoStream(BaseAPIStream):
         offset = 0
         if next_page_token:
             offset = next_page_token
-        self.logger.info(f"Offset: {offset}")
         return {"limit": self.RESULTS_PER_PAGE, "offset": offset}
 
 
@@ -128,7 +128,8 @@ class SnapshotProposalsStream(SnapshotDaoStream):
     def get_child_context(self, record: dict, context: Optional[dict]) -> dict:
         """Return a context dictionary for child streams."""
         return {
-            "proposalId": record['id']
+            "proposalId": record['id'],
+            "end": record['snapshot_proposal']['end']
         }
 
     schema = PropertiesList(
@@ -191,12 +192,34 @@ class SnapshotVotesStream(SnapshotDaoChildStream):
     path = "/votes"
 
     primary_keys = ['rowId']
-    replication_key = None
+    replication_key = 'timestamp'
     ignore_parent_replication_keys = True
-
     
     parent_stream_type = SnapshotProposalsStream
 
+    def get_records(self, context: Optional[dict]) -> Iterable[Dict[str, Any]]:
+        """Return a generator of row-type dictionary objects.
+
+        Each row emitted should be a dictionary of property names to their values.
+        """
+
+        endDate = datetime.datetime.fromtimestamp(context['end'])
+        today = datetime.datetime.now()
+        if endDate < today:
+            lastDownload = self.get_starting_timestamp(context)
+            if lastDownload is not None:
+                # Only download last 2 days after voting finishes
+                dtime = today - endDate
+                days = (dtime.total_seconds() / 3600 / 24)
+                if days > 2:
+                    return
+
+        
+        time.sleep(0.75)
+        for row in self.request_records(context):
+            row = self.post_process(row, context)
+            row_key = "|".join([v for k,v in row.items() if k in self.primary_keys])
+            yield row
 
     def get_url_params(self, context, next_page_token: Optional[IntegerType] = None) -> dict:
         return {

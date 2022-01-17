@@ -40,14 +40,14 @@ from tap_decentraland_api.scenes_streams import (
 )
 
 STREAM_TYPES = [
-    TilesStream,
+    #TilesStream,
     SnapshotProposalsStream,
     SnapshotVotesStream,
-    AragonProposalsStream,
-    CoingeckoManaStream,
-    SceneSnapshotStream,
-    SceneMappingStream,
-    SceneStream,
+    #AragonProposalsStream,
+    #CoingeckoManaStream,
+    #SceneSnapshotStream,
+    #SceneMappingStream,
+    #SceneStream,
 ]
 
 
