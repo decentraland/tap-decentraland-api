@@ -218,7 +218,6 @@ class SnapshotVotesStream(SnapshotDaoChildStream):
         time.sleep(0.75)
         for row in self.request_records(context):
             row = self.post_process(row, context)
-            row_key = "|".join([v for k,v in row.items() if k in self.primary_keys])
             yield row
 
     def get_url_params(self, context, next_page_token: Optional[IntegerType] = None) -> dict:
