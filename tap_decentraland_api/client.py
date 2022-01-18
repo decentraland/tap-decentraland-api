@@ -18,7 +18,7 @@ class BaseAPIStream(RESTStream):
         backoff.expo,
         (requests.exceptions.RequestException),
         max_tries=10,
-        giveup=lambda e: e.response is not None and 400 <= e.response.status_code < 500 and e.response.status_code != 429,
+        giveup=lambda e: e.response is not None and 400 <= e.response.status_code < 500 and e.response.status_code != 429 and e.response.status_code != 502,
         factor=3,
     )
     def _request_with_backoff(

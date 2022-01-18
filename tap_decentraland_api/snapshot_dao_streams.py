@@ -206,13 +206,16 @@ class SnapshotVotesStream(SnapshotDaoChildStream):
         endDate = datetime.datetime.fromtimestamp(context['end'])
         today = datetime.datetime.now()
         if endDate < today:
-            lastDownload = self.get_starting_timestamp(context)
-            if lastDownload is not None:
-                # Only download last 2 days after voting finishes
-                dtime = today - endDate
-                days = (dtime.total_seconds() / 3600 / 24)
-                if days > 2:
-                    return
+            try:
+                lastDownload = self.get_starting_timestamp(context)
+                if lastDownload is not None:
+                    # Only download last 2 days after voting finishes
+                    dtime = today - endDate
+                    days = (dtime.total_seconds() / 3600 / 24)
+                    if days > 2:
+                        return
+            except:
+                self.logger.warn('Could not get starting timestamp')
 
         
         time.sleep(0.75)
