@@ -50,8 +50,6 @@ STREAM_TYPES = [
     SceneStream,
 ]
 
-STREAM_TYPES = [SnapshotProposalsStream, SnapshotVotesStream]
-
 class TapDecentralandAPI(Tap):
     """DecentralandAPI tap class."""
 
