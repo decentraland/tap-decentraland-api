@@ -88,5 +88,7 @@ class TilesStream(DecentralandAPIStream):
         row = defaultValue(row, 'tokenId', '')
         row = defaultValue(row, 'price', None)
         row = defaultValue(row, 'name', '')
+
+        row['name'] = row['name'].replace('\\', '\\\\') # Escape backlashes
         
         return row
