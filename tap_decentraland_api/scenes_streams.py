@@ -285,8 +285,8 @@ class SceneStream(DecentralandStreamAPIStream):
             )),
             Property("policy", ObjectType(
                 Property("contentRating", StringType),
-                Property("fly", BooleanType),
-                Property("voiceEnabled", BooleanType),
+                Property("fly", IntegerType),
+                Property("voiceEnabled", IntegerType),
                 Property("blacklist", StringType),
                 Property("teleportPosition", StringType)
             )),
