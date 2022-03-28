@@ -71,9 +71,15 @@ class EventsStream(RESTStream):
         self.logger.info(f"Offset: {offset}")
         return {"limit": self.RESULTS_PER_PAGE, "offset": offset, "list":list}
 
+    def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
+        """Generate row id"""
+        row['rowId'] = "|".join([row['id'],row['updated_at']])
+
+        return row
+
     name = "events"
     path = "/events"
-    primary_keys = ['id']
+    primary_keys = ['rowId']
     replication_key = None  
     
     schema = PropertiesList(
@@ -99,11 +105,10 @@ class EventsStream(RESTStream):
         Property("recurrent_setpos", IntegerType),
         Property("recurrent_monthday", IntegerType),
         Property("recurrent_weekday_mask", IntegerType),
-        Property("recurrent_month_mask", BooleanType),
+        Property("recurrent_month_mask", IntegerType),
         Property("recurrent_interval", IntegerType),
         Property("recurrent_count", IntegerType),
         Property("recurrent_until", DateTimeType),
-        Property("created_at", BooleanType),
-        Property("updated_at", BooleanType),
-        Property("price", NumberType)
+        Property("created_at", DateTimeType),
+        Property("updated_at", DateTimeType)
     ).to_dict()
