@@ -83,7 +83,8 @@ class EventsStream(RESTStream):
     replication_key = None  
     
     schema = PropertiesList(
-        Property("id", StringType, required=True),
+        Property("rowId", StringType, required=True),
+        Property("id", StringType),
         Property("name", StringType),
         Property("description", StringType),
         Property("approved", BooleanType),
