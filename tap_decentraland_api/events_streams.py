@@ -1,19 +1,10 @@
-"""Stream class for tap-decentraland-api."""
+"""Events stream class for tap-decentraland-api."""
 
-
+import logging
 import requests
 from pathlib import Path
 from typing import Any, Dict, Optional, Union, List, Iterable
 from singer_sdk.streams import RESTStream
-
-
-
-from singer_sdk.authenticators import (
-    APIAuthenticatorBase,
-    SimpleAuthenticator,
-    OAuthAuthenticator,
-    OAuthJWTAuthenticator
-)
 
 from singer_sdk.typing import (
     ArrayType,
@@ -29,22 +20,70 @@ from singer_sdk.typing import (
 
 SCHEMAS_DIR = Path(__file__).parent / Path("./schemas")
 
-class DecentralandAPIStream(RESTStream):
-    """DecentralandAPI stream class."""
+class EventsStream(RESTStream):
+
+    RESULTS_PER_PAGE = 100
 
     @property
     def url_base(self) -> str:
         """Return the API URL root, configurable via tap settings."""
-        return self.config["api_url"]
+        return self.config["events_api_url"]
 
+    def parse_response(self, response) -> Iterable[dict]:
+        """Parse Events rows"""
 
-class EventsStream(DecentralandAPIStream):
+        data =response.json().get("data")
+        logging.warning(data)
+
+        for t in data:
+            yield t
+
+    def parse_response(self, response) -> Iterable[dict]:
+        """Parse the response and return an iterator of result rows."""
+        data = response.json().get("data")
+        try:
+            for row in data:                
+                yield row
+        except Exception as err:
+            self.logger.warn(f"(stream: {self.name}) Problem with response: {data}")
+            raise err
+
+    def get_next_page_token(
+        self, response: requests.Response, previous_token: Optional[Any]
+    ) -> Any:
+        """Return token identifying next page or None if all records have been read."""
+        
+        data = response.json().get("data")
+        results_len = len(data)
+
+        old_token = previous_token or 0
+        self.logger.info(f"Old token: {old_token}")
+        self.logger.info(f"Results: {results_len}")
+        
+        if results_len == self.RESULTS_PER_PAGE:
+            next_page_token = old_token + self.RESULTS_PER_PAGE
+            self.logger.info(f"Next page: {next_page_token}")
+            return next_page_token
+        else:
+            self.logger.info(f"No more pages")
+            return None # Finished if we have less than RESULTS_PER_PAGE
+
+    def get_url_params(
+        self,
+        context: Optional[dict],
+        next_page_token: Optional[Any] = None,
+        list = "all"
+    ) -> Dict[str, Any]:
+        offset = 0
+        if next_page_token:
+            offset = next_page_token
+        self.logger.info(f"Offset: {offset}")
+        return {"limit": self.RESULTS_PER_PAGE, "offset": offset, "list":list}
+
     name = "events"
-
-    path = "/api/events"
-
+    path = "/events"
     primary_keys = ['id']
-    replication_key = None
+    replication_key = None  
     
     schema = PropertiesList(
         Property("id", StringType, required=True),
@@ -55,36 +94,28 @@ class EventsStream(DecentralandAPIStream):
         Property("highlighted", BooleanType),
         Property("trending", BooleanType),
         # Property("image", ?URIType),
-        Property("user", BooleanType),
-        Property("user_name", BooleanType),
-        Property("total_attendees", BooleanType),
-        Property("latest_attendees", BooleanType),
-        Property("url", BooleanType),
-        Property("scene_name", BooleanType),
-        Property("start_at", BooleanType),
-        Property("finish_at", BooleanType),
-        Property("next_start_at", BooleanType),
-        Property("next_finish_at", BooleanType),
+        Property("user", StringType),
+        Property("user_name", StringType),
+        Property("total_attendees", IntegerType),
+        # Property("latest_attendees", ArrayType),
+        # Property("latest_addresses", ArrayType),
+        Property("url", StringType),
+        Property("scene_name", StringType),
+        Property("start_at", DateTimeType),
+        Property("finish_at", DateTimeType),
+        Property("next_start_at", DateTimeType),
+        Property("next_finish_at", DateTimeType),
         Property("all_day", BooleanType),
         Property("recurrent", BooleanType),
-        Property("recurrent_frequency", BooleanType),
-        Property("recurrent_setpos", BooleanType),
-        Property("recurrent_setpos", BooleanType),
-        Property("recurrent_monthday", BooleanType),
-        Property("recurrent_weekday_mask", BooleanType),
+        Property("recurrent_frequency", StringType),
+        Property("recurrent_setpos", IntegerType),
+        Property("recurrent_monthday", IntegerType),
+        Property("recurrent_weekday_mask", IntegerType),
         Property("recurrent_month_mask", BooleanType),
-        Property("recurrent_interval", BooleanType),
-        Property("recurrent_count", BooleanType),
-        Property("recurrent_until", BooleanType),
+        Property("recurrent_interval", IntegerType),
+        Property("recurrent_count", IntegerType),
+        Property("recurrent_until", DateTimeType),
         Property("created_at", BooleanType),
         Property("updated_at", BooleanType),
-        Property("price", NumberType),
+        Property("price", NumberType)
     ).to_dict()
-
-
-    def parse_response(self, response) -> Iterable[dict]:
-        """Parse Tiles rows"""
-
-        data =response.json().get("data")
-        for _, t in data.items():
-            yield t
