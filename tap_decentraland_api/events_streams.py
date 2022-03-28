@@ -30,15 +30,6 @@ class EventsStream(RESTStream):
         return self.config["events_api_url"]
 
     def parse_response(self, response) -> Iterable[dict]:
-        """Parse Events rows"""
-
-        data =response.json().get("data")
-        logging.warning(data)
-
-        for t in data:
-            yield t
-
-    def parse_response(self, response) -> Iterable[dict]:
         """Parse the response and return an iterator of result rows."""
         data = response.json().get("data")
         try:
