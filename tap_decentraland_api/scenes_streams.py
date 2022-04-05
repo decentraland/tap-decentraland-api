@@ -252,6 +252,8 @@ class SceneStream(DecentralandStreamAPIStream):
                 row['metadata']['requiredPermissions'] = json.dumps(metadata['requiredPermissions'])
             if 'spawnPoints' in metadata:
                 row['metadata']['spawnPoints'] = json.dumps(metadata['spawnPoints'])
+            if 'tags' in metadata:
+                row['metadata']['tags'] = json.dumps(metadata['tags'])
             if 'source' in metadata:
                 row['metadata']['source'] = json.dumps(metadata['source'])
 
@@ -293,6 +295,7 @@ class SceneStream(DecentralandStreamAPIStream):
             Property("source", StringType),
             Property("requiredPermissions", StringType),
             Property("spawnPoints", StringType),
+            Property("tags", StringType),
 
         )),
         
