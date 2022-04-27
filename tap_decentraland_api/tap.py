@@ -37,6 +37,7 @@ from tap_decentraland_api.scenes_streams import (
     SceneSnapshotStream,
     SceneMappingStream,
     SceneStream,
+    SceneChangesStream,
 )
 
 from tap_decentraland_api.events_streams import (
@@ -52,7 +53,8 @@ STREAM_TYPES = [
     SceneSnapshotStream,
     SceneMappingStream,
     SceneStream,
-    EventsStream
+    EventsStream,
+    SceneChangesStream,
 ]
 
 class TapDecentralandAPI(Tap):

@@ -1,9 +1,12 @@
 """Stream class for tap-decentraland-api."""
 
+from datetime import datetime
 import requests, json, backoff
 
 from pathlib import Path
 from typing import Any, Dict, Optional, Union, List, Iterable, cast
+
+from sqlalchemy import String
 
 
 from singer_sdk.streams import RESTStream
@@ -268,6 +271,115 @@ class SceneStream(DecentralandStreamAPIStream):
         Property("metadata", ObjectType(
             Property("display", ObjectType(
                 Property("title", StringType),
+                Property("favicon", StringType),
+                Property("navmapThumbnail", StringType)
+            )),
+            Property("owner", StringType),
+            Property("contact", ObjectType(
+                Property("name", StringType),
+                Property("email", StringType)
+            )),
+            Property("main", StringType),
+            Property("scene", ObjectType(
+                Property("parcels", StringType),
+                Property("base", StringType)
+            )),
+            Property("communications", ObjectType(
+                Property("type", StringType),
+                Property("signalling", StringType)
+            )),
+            Property("policy", ObjectType(
+                Property("contentRating", StringType),
+                Property("fly", BooleanType),
+                Property("voiceEnabled", BooleanType),
+                Property("blacklist", StringType),
+                Property("teleportPosition", StringType)
+            )),
+            Property("source", StringType),
+            Property("requiredPermissions", StringType),
+            Property("spawnPoints", StringType),
+            Property("tags", StringType),
+
+        )),
+        
+    ).to_dict()
+
+
+class SceneChangesStream(DecentralandStreamAPIStream):
+
+    name = "scene_changes"
+
+    path = "/content/pointer-changes"
+
+    primary_keys = ['deploymentId']
+    replication_method = "INCREMENTAL"
+    replication_key = "localTimestamp"
+    is_sorted = True
+    records_jsonpath: str = "$.deltas[*]"
+    next_page_token_jsonpath: str = "$.deltas[-1:].localTimestamp"
+    RESULTS_PER_PAGE = 500
+    last_id = None
+
+    def get_url_params(
+        self,
+        context: Optional[dict],
+        next_page_token: Optional[Any] = None
+    ) -> Dict[str, Any]:
+        next_timestamp = datetime(2000,1,1).timestamp()*1000
+        if next_page_token:
+            next_timestamp = next_page_token
+        self.logger.info(f"Time: {next_timestamp}")
+        return {
+            "limit": self.RESULTS_PER_PAGE,
+            "from": next_timestamp,
+            "sortingOrder": "ASC",
+            "entityType": "scene",
+            "lastId": self.last_id
+        }
+
+
+    def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
+        """Rename and flatten some fields"""
+        row['scene_hash'] = row['entityId']
+        self.last_id = row['scene_hash']
+        del row['entityId']
+        
+        # Flatten some properties into json strings
+        metadata = row.get('metadata')
+        if metadata:
+            if 'tags' in metadata:
+                row['metadata']['tags'] = json.dumps(metadata['tags'])
+            if 'scene' in metadata:
+                if 'parcels' in metadata['scene']:
+                    row['metadata']['scene']['parcels'] = json.dumps(metadata['scene']['parcels'])
+                if 'base' in metadata['scene']:
+                    row['metadata']['scene']['base'] = json.dumps(metadata['scene']['base'])
+            if 'policy' in metadata and metadata['policy'] is not None:
+                if 'blacklist' in metadata['policy']:
+                    row['metadata']['policy']['blacklist'] = json.dumps(metadata['policy']['blacklist'])
+            if 'requiredPermissions' in metadata:
+                row['metadata']['requiredPermissions'] = json.dumps(metadata['requiredPermissions'])
+            if 'spawnPoints' in metadata:
+                row['metadata']['spawnPoints'] = json.dumps(metadata['spawnPoints'])
+            if 'tags' in metadata:
+                row['metadata']['tags'] = json.dumps(metadata['tags'])
+            if 'source' in metadata:
+                row['metadata']['source'] = json.dumps(metadata['source'])
+
+        return row
+
+    schema = PropertiesList(
+        Property("deploymentId", IntegerType, required=True),
+        Property("scene_hash", StringType, required=True),
+        Property("type", StringType),
+        Property("localTimestamp", IntegerType),
+        Property("entityTimestamp", IntegerType),
+        Property("type", StringType),
+        Property("version", StringType),
+        Property("metadata", ObjectType(
+            Property("display", ObjectType(
+                Property("title", StringType),
+                Property("description", StringType),
                 Property("favicon", StringType),
                 Property("navmapThumbnail", StringType)
             )),
