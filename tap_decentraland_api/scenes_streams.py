@@ -326,8 +326,11 @@ class SceneChangesStream(DecentralandStreamAPIStream):
         next_page_token: Optional[Any] = None
     ) -> Dict[str, Any]:
         next_timestamp = datetime(2000,1,1).timestamp()*1000
+        replication_key_value = self.get_starting_replication_key_value(context)
         if next_page_token:
             next_timestamp = next_page_token
+        elif replication_key_value:
+            next_timestamp = replication_key_value
         self.logger.info(f"Time: {next_timestamp}")
         return {
             "limit": self.RESULTS_PER_PAGE,
