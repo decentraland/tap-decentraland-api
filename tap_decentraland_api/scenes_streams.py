@@ -359,6 +359,9 @@ class SceneChangesStream(DecentralandStreamAPIStream):
         row['scene_hash'] = row['entityId']
         self.last_id = row['scene_hash']
         del row['entityId']
+
+        row['entityTimestamp'] = int(row['entityTimestamp'])
+        row['localTimestamp'] = int(row['localTimestamp'])
         
         # Flatten some properties into json strings
         metadata = row.get('metadata')
