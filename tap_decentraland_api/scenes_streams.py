@@ -328,7 +328,7 @@ class SceneChangesStream(DecentralandStreamAPIStream):
         next_page_token: Optional[Any] = None
     ) -> Dict[str, Any]:
 
-        next_timestamp = datetime(2022,4,27).timestamp()*1000 # 2000-01-01 as initial dummy key
+        next_timestamp = datetime(2000,1,1).timestamp()*1000 # 2000-01-01 as initial dummy key
         replication_key_value = self.get_starting_replication_key_value(context)
         signpost = self.get_replication_key_signpost(context)
 
