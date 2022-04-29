@@ -351,7 +351,7 @@ class SceneChangesStream(DecentralandStreamAPIStream):
         self, context: Optional[dict]
     ) -> Optional[Union[datetime, Any]]:
         one_day_ago = utc_now() - timedelta(hours = 24)
-        return one_day_ago.timestamp()*1000
+        return int(one_day_ago.timestamp()*1000)
 
 
     def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
