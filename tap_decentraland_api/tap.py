@@ -45,16 +45,17 @@ from tap_decentraland_api.events_streams import (
 )
 
 STREAM_TYPES = [
-    TilesStream,
-    SnapshotProposalsStream,
-    SnapshotVotesStream,
     AragonProposalsStream,
     CoingeckoManaStream,
-    SceneSnapshotStream,
-    SceneMappingStream,
-    SceneStream,
     EventsStream,
     SceneChangesStream,
+    SceneMappingStream,
+    SceneSnapshotStream,
+    SceneStream,
+    SnapshotProposalsStream,
+    SnapshotVotesStream,
+    SmartItemsStream,
+    TilesStream
 ]
 
 class TapDecentralandAPI(Tap):
@@ -71,13 +72,12 @@ class TapDecentralandAPI(Tap):
         Property("coingecko_url", StringType, default="https://api.coingecko.com/api/v3"),
         Property("coingecko_start_date", DateTimeType, default="2017-10-28"),
         Property("events_api_url", StringType, default="https://events.decentraland.org/api")
+        Property("smart_items_url", StringType, default="https://builder-api.decentraland.org/v1")
     ).to_dict()
-
 
     def discover_streams(self) -> List[Stream]:
         """Return a list of discovered streams."""
         return [stream_class(tap=self) for stream_class in STREAM_TYPES]
-
 
 # CLI Execution:
 cli = TapDecentralandAPI.cli
