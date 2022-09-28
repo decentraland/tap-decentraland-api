@@ -14,34 +14,39 @@ from singer_sdk.typing import (
     ObjectType,
     PropertiesList,
     Property,
-    StringType,
-)
-from tap_decentraland_api.api_streams import (
-    TilesStream,
+    StringType
 )
 
-from tap_decentraland_api.snapshot_dao_streams import (
-    SnapshotProposalsStream,
-    SnapshotVotesStream,
+from tap_decentraland_api.api_streams import (
+    TilesStream
 )
 
 from tap_decentraland_api.aragon_dao_streams import (
-    AragonProposalsStream,
+    AragonProposalsStream
 )
 
 from tap_decentraland_api.coingecko_mana_stream import (
-    CoingeckoManaStream,
-)
-
-from tap_decentraland_api.scenes_streams import (
-    SceneSnapshotStream,
-    SceneMappingStream,
-    SceneStream,
-    SceneChangesStream,
+    CoingeckoManaStream
 )
 
 from tap_decentraland_api.events_streams import (
     EventsStream
+)
+
+from tap_decentraland_api.scenes_streams import (
+    SceneChangesStream,
+    SceneMappingStream,
+    SceneSnapshotStream,
+    SceneStream
+)
+
+from tap_decentraland_api.smart_items_streams import (
+    SmartItemsStream
+)
+
+from tap_decentraland_api.snapshot_dao_streams import (
+    SnapshotProposalsStream,
+    SnapshotVotesStream
 )
 
 STREAM_TYPES = [
@@ -56,6 +61,10 @@ STREAM_TYPES = [
     SnapshotVotesStream,
     SmartItemsStream,
     TilesStream
+]
+
+STREAM_TYPES = [
+    SmartItemsStream
 ]
 
 class TapDecentralandAPI(Tap):
