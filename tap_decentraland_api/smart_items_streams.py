@@ -82,7 +82,15 @@ class SmartItemsStream(RESTStream):
                 row['assets']['id'] = json.dumps(assets['id'])
             if 'asset_pack_id' in assets:
                 row['assets']['asset_pack_id'] = json.dumps(assets['asset_pack_id'])
-            
+            if 'name' in assets:
+                row['assets']['name'] = json.dumps(assets['name'])
+            if 'model' in assets:
+                row['assets']['model'] = json.dumps(assets['model'])
+            if 'thumbnail' in assets:
+                row['assets']['thumbnail'] = json.dumps(assets['thumbnail'])
+            if 'tags' in assets:
+                row['assets']['tags'] = json.dumps(assets['tags'])
+                                                            
 
         return row
 
