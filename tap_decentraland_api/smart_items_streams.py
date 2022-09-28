@@ -76,22 +76,10 @@ class SmartItemsStream(RESTStream):
         row['rowId'] = "|".join([row['id'],row['updated_at']])
 
         # Flatten some properties into json strings
-        assets = row.get('assets')
-        if assets:
-            if 'id' in assets:
-                row['assets']['id'] = json.dumps(assets['id'])
-            if 'asset_pack_id' in assets:
-                row['assets']['asset_pack_id'] = json.dumps(assets['asset_pack_id'])
-            if 'name' in assets:
-                row['assets']['name'] = json.dumps(assets['name'])
-            if 'model' in assets:
-                row['assets']['model'] = json.dumps(assets['model'])
-            if 'thumbnail' in assets:
-                row['assets']['thumbnail'] = json.dumps(assets['thumbnail'])
-            if 'tags' in assets:
-                row['assets']['tags'] = json.dumps(assets['tags'])
-                                                            
-
+        row['actions'] = json.dumps(row['actions'])
+        row['contents'] = json.dumps(row['contents'])
+        row['parameters'] = json.dumps(row['parameters'])
+        
         return row
 
     name = "smart_items"
@@ -107,18 +95,17 @@ class SmartItemsStream(RESTStream):
         Property("created_at", DateTimeType),
         Property("updated_at", DateTimeType),
         Property("eth_address", StringType),
-        Property("assets", ObjectType(
+        Property("assets", ArrayType(ObjectType(
             Property("id", StringType),
             Property("asset_pack_id", StringType),
             Property("name", StringType),
             Property("model", StringType),
             Property("thumbnail", StringType),
-            Property("tags", ArrayType),
+            Property("tags", ArrayType(StringType)),
             Property("category", StringType),
             Property("created_at", DateTimeType),
             Property("updated_at", DateTimeType),
-            Property("metrics", ObjectType(
-                Property("pebbles.glb", StringType))),
+            Property("contents", StringType),
             Property("created_at", DateTimeType),
             Property("updated_at", DateTimeType),            
             Property("metrics", ObjectType(
@@ -129,8 +116,8 @@ class SmartItemsStream(RESTStream):
                 Property("bodies", IntegerType),
                 Property("entities", IntegerType))),
             Property("script", StringType),
-            Property("parameters", ArrayType),
-            Property("actions", ArrayType),
-            Property("legacy_id", StringType))
-            )
+            Property("parameters", StringType),
+            Property("actions", StringType),
+            Property("legacy_id", StringType)
+            )))
     ).to_dict()

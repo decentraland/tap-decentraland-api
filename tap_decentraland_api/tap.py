@@ -80,8 +80,8 @@ class TapDecentralandAPI(Tap):
         Property("governance_aragon_api_url", StringType, default="https://api.thegraph.com/subgraphs/name/aragon/aragon-voting-mainnet"),
         Property("coingecko_url", StringType, default="https://api.coingecko.com/api/v3"),
         Property("coingecko_start_date", DateTimeType, default="2017-10-28"),
-        Property("events_api_url", StringType, default="https://events.decentraland.org/api")
-        Property("smart_items_url", StringType, default="https://builder-api.decentraland.org/v1")
+        Property("events_api_url", StringType, default="https://events.decentraland.org/api"),
+        Property("smart_items_url", StringType, default="https://builder-api.decentraland.org/v1"),
     ).to_dict()
 
     def discover_streams(self) -> List[Stream]:
