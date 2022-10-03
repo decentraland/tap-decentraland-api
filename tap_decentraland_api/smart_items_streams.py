@@ -75,13 +75,15 @@ class SmartItemsStream(RESTStream):
         """Generate row id"""
         row['rowId'] = "|".join([row['id'],row['updated_at']])
 
-        if row['actions']:
-            row['actions'] = json.dumps(row['actions'])
-        if row['contents']:
-            row['contents'] = json.dumps(row['contents'])
-        if row['parameters']:    
-            row['parameters'] = json.dumps(row['parameters'])
-        
+        for i in range(1, len(row['assets'])):
+
+            if 'actions' in row['assets'][i]:
+                row['assets'][i]['actions'] = json.dumps(row['assets'][i].get('actions'))
+            if 'contents' in row['assets'][i]:
+                row['assets'][i]['contents'] = json.dumps(row['assets'][i].get('contents'))
+            if 'parameters' in row['assets'][i]:    
+                row['assets'][i]['parameters'] = json.dumps(row['assets'][i].get('parameters'))
+            
         return row
 
     name = "smart_items"
