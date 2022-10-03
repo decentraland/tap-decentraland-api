@@ -27,7 +27,7 @@ class SmartItemsStream(RESTStream):
     @property
     def url_base(self) -> str:
         """Return the API URL root, configurable via tap settings."""
-        return self.config["smart_items_api_url"]
+        return self.config["smart_items_url"]
 
     def parse_response(self, response) -> Iterable[dict]:
         """Parse the response and return an iterator of result rows."""
@@ -75,10 +75,12 @@ class SmartItemsStream(RESTStream):
         """Generate row id"""
         row['rowId'] = "|".join([row['id'],row['updated_at']])
 
-        # Flatten some properties into json strings
-        row['actions'] = json.dumps(row['actions'])
-        row['contents'] = json.dumps(row['contents'])
-        row['parameters'] = json.dumps(row['parameters'])
+        if row['actions']:
+            row['actions'] = json.dumps(row['actions'])
+        if row['contents']:
+            row['contents'] = json.dumps(row['contents'])
+        if row['parameters']:    
+            row['parameters'] = json.dumps(row['parameters'])
         
         return row
 
