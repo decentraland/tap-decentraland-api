@@ -21,7 +21,11 @@ RUN pip install "poetry==$POETRY_VERSION"
 RUN poetry config virtualenvs.create false \
   && poetry install --no-dev --no-interaction --no-ansi
 
+# Create venv for target-jsonl (Incompatible dependencies with meltano sdk)
+RUN python3 -m venv /opt/venvjsonl/
+RUN . /opt/venvjsonl/bin/activate && pip install target-jsonl && chmod -R 755 /opt/venvjsonl/ && mkdir /project/output
+
 # Copy over remaining project files
 COPY . /project/
 
-ENTRYPOINT ["/project/tap-decentraland-api.sh"]
+ENTRYPOINT ["/project/docker-pipeline.sh"]
