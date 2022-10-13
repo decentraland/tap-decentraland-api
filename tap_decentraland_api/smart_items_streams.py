@@ -75,7 +75,7 @@ class SmartItemsStream(RESTStream):
         """Generate row id"""
         row['rowId'] = "|".join([row['id'],row['updated_at']])
 
-        for i in range(1, len(row['assets'])):
+        for i in range(len(row['assets'])):
 
             if 'actions' in row['assets'][i]:
                 row['assets'][i]['actions'] = json.dumps(row['assets'][i].get('actions'))

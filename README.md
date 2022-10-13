@@ -19,10 +19,10 @@ You need to specify if you are trying to get test or production data by setting 
 
 ### Executing the Tap Directly
 
+Use docker to debug this tap directly using target-jsonl like this:
+
 ```bash
-tap-decentraland-api --version
-tap-decentraland-api --help
-tap-decentraland-api --config CONFIG --discover > ./catalog.json
+./docker-run.sh
 ```
 
 ## Developer Resources
@@ -32,21 +32,6 @@ tap-decentraland-api --config CONFIG --discover > ./catalog.json
 ```bash
 pipx install poetry
 poetry install
-```
-
-### Create and Run Tests
-
-Create tests within the `tap_decentraland_api/tests` subfolder and
-  then run:
-
-```bash
-poetry run pytest
-```
-
-You can also test the `tap-decentraland-api` CLI interface directly using `poetry run`:
-
-```bash
-poetry run tap-decentraland-api --help
 ```
 
 ### Testing with [Meltano](meltano.com)
