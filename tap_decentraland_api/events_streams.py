@@ -71,12 +71,6 @@ class EventsStream(RESTStream):
         self.logger.info(f"Offset: {offset}")
         return {"limit": self.RESULTS_PER_PAGE, "offset": offset, "list":list}
 
-    def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
-        """Generate row id"""
-        row['rowId'] = "|".join([row['id'],row['updated_at']])
-
-        return row
-
     name = "events"
     path = "/events"
     primary_keys = ['rowId']
@@ -111,5 +105,19 @@ class EventsStream(RESTStream):
         Property("recurrent_count", IntegerType),
         Property("recurrent_until", DateTimeType),
         Property("created_at", DateTimeType),
-        Property("updated_at", DateTimeType)
+        Property("updated_at", DateTimeType),
+        Property("tile_x", IntegerType),
+        Property("tile_y", IntegerType)
     ).to_dict()
+
+
+    def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
+        """Generate row id"""
+        row['rowId'] = "|".join([row['id'],row['updated_at']])
+        
+        position = row.get('position')
+        if position and len(position) >= 2:
+            row['tile_x'] = int(position[0])
+            row['tile_y'] = int(position[1])
+
+        return row
