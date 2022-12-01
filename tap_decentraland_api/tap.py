@@ -33,6 +33,10 @@ from tap_decentraland_api.events_streams import (
     EventsStream
 )
 
+from tap_decentraland_api.places_streams import (
+    PlacesStream
+)
+
 from tap_decentraland_api.scenes_streams import (
     SceneChangesStream,
     SceneMappingStream,
@@ -53,6 +57,7 @@ STREAM_TYPES = [
     AragonProposalsStream,
     CoingeckoManaStream,
     EventsStream,
+    PlacesStream,
     SceneChangesStream,
     SceneMappingStream,
     SceneSnapshotStream,
@@ -62,6 +67,8 @@ STREAM_TYPES = [
     SmartItemsStream,
     TilesStream
 ]
+
+STREAM_TYPES = [ PlacesStream ]
 
 class TapDecentralandAPI(Tap):
     """DecentralandAPI tap class."""
@@ -76,6 +83,7 @@ class TapDecentralandAPI(Tap):
         Property("governance_snapshot_api_url", StringType, default="https://governance.decentraland.org/api"),
         Property("governance_aragon_api_url", StringType, default="https://api.thegraph.com/subgraphs/name/aragon/aragon-voting-mainnet"),
         Property("peer_api_url", StringType, default="https://peer-lb.decentraland.org"),
+        Property("places_api_url", StringType, default="https://places.decentraland.zone/api"),
         Property("scenes_per_run", IntegerType, default=2000),
         Property("smart_items_url", StringType, default="https://builder-api.decentraland.org/v1"),
     ).to_dict()
