@@ -39,26 +39,6 @@ class PlacesStream(RESTStream):
             self.logger.warn(f"(stream: {self.name}) Problem with response: {data}")
             raise err
 
-    def get_next_page_token(
-        self, response: requests.Response, previous_token: Optional[Any]
-    ) -> Any:
-        """Return token identifying next page or None if all records have been read."""
-        
-        data = response.json().get("data")
-        results_len = len(data)
-
-        old_token = previous_token or 0
-        self.logger.info(f"Old token: {old_token}")
-        self.logger.info(f"Results: {results_len}")
-        
-        if results_len == self.RESULTS_PER_PAGE:
-            next_page_token = old_token + self.RESULTS_PER_PAGE
-            self.logger.info(f"Next page: {next_page_token}")
-            return next_page_token
-        else:
-            self.logger.info(f"No more pages")
-            return None # Finished if we have less than RESULTS_PER_PAGE
-
     def get_url_params(
         self,
         context: Optional[dict],

@@ -81,7 +81,7 @@ class TapDecentralandAPI(Tap):
         Property("governance_snapshot_api_url", StringType, default="https://governance.decentraland.org/api"),
         Property("governance_aragon_api_url", StringType, default="https://api.thegraph.com/subgraphs/name/aragon/aragon-voting-mainnet"),
         Property("peer_api_url", StringType, default="https://peer-lb.decentraland.org"),
-        Property("places_api_url", StringType, default="https://places.decentraland.zone/api"),
+        Property("places_api_url", StringType, default="https://places.decentraland.org/api"),
         Property("scenes_per_run", IntegerType, default=2000),
         Property("smart_items_url", StringType, default="https://builder-api.decentraland.org/v1"),
     ).to_dict()
