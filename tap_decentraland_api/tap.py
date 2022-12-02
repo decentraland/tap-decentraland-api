@@ -68,8 +68,6 @@ STREAM_TYPES = [
     TilesStream
 ]
 
-STREAM_TYPES = [ PlacesStream ]
-
 class TapDecentralandAPI(Tap):
     """DecentralandAPI tap class."""
 
