@@ -1,4 +1,4 @@
-"""Events stream class for tap-decentraland-api."""
+"""Places stream class for tap-decentraland-api."""
 
 import logging
 import requests
@@ -11,8 +11,6 @@ from singer_sdk.typing import (
     BooleanType,
     DateTimeType,
     IntegerType,
-    NumberType,
-    ObjectType,
     PropertiesList,
     Property,
     StringType,
@@ -21,8 +19,6 @@ from singer_sdk.typing import (
 SCHEMAS_DIR = Path(__file__).parent / Path("./schemas")
 
 class PlacesStream(RESTStream):
-
-    RESULTS_PER_PAGE = 100
 
     @property
     def url_base(self) -> str:
@@ -39,23 +35,11 @@ class PlacesStream(RESTStream):
             self.logger.warn(f"(stream: {self.name}) Problem with response: {data}")
             raise err
 
-    def get_url_params(
-        self,
-        context: Optional[dict],
-        next_page_token: Optional[Any] = None,
-        list = "all"
-    ) -> Dict[str, Any]:
-        offset = 0
-        if next_page_token:
-            offset = next_page_token
-        self.logger.info(f"Offset: {offset}")
-        return {"limit": self.RESULTS_PER_PAGE, "offset": offset, "list":list}
-
     name = "places" 
     path = "/places"
     primary_keys = ['rowId']
     replication_key = None  
-    
+
     schema = PropertiesList(
         Property("rowId", StringType, required=True),
         Property("id", StringType),
@@ -63,8 +47,8 @@ class PlacesStream(RESTStream):
         Property("description", StringType),
         Property("image", StringType),
         Property("owner", StringType),
-        Property("tags", ArrayType),
-        Property("positions", ArrayType),
+        Property("tags", StringType),
+        Property("positions", StringType),
         Property("base_position", StringType),
         Property("contact_name", StringType),
         Property("contact_email", StringType),
@@ -76,7 +60,7 @@ class PlacesStream(RESTStream):
         Property("favorites", IntegerType),
         Property("likes", IntegerType),
         Property("dislikes", IntegerType),
-        Property("categories", ArrayType),
+        Property("categories", StringType),
         Property("like_rate", IntegerType),
         Property("highlighted", BooleanType),
         Property("highlighted_image", StringType),
@@ -93,5 +77,5 @@ class PlacesStream(RESTStream):
     def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
         """Generate row id"""
         row['rowId'] = "|".join([row['id'],row['updated_at']])
-        
+        print('yes')
         return row

@@ -6,12 +6,8 @@ from datetime import datetime
 
 from singer_sdk import Tap, Stream
 from singer_sdk.typing import (
-    ArrayType,
-    BooleanType,
     DateTimeType,
     IntegerType,
-    NumberType,
-    ObjectType,
     PropertiesList,
     Property,
     StringType
