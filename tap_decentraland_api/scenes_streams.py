@@ -253,6 +253,10 @@ class SceneStream(DecentralandStreamAPIStream):
             if 'policy' in metadata and metadata['policy'] is not None:
                 if 'blacklist' in metadata['policy']:
                     row['metadata']['policy']['blacklist'] = json.dumps(metadata['policy']['blacklist'])
+                if 'fly' in metadata['policy'] and type(metadata['policy']['fly']) is str:
+                    metadata['policy']['fly'] = metadata['policy']['fly'].lower() == 'true'
+                if 'voiceEnabled' in metadata['policy'] and type(metadata['policy']['voiceEnabled']) is str:
+                    metadata['policy']['voiceEnabled'] = metadata['policy']['voiceEnabled'].lower() == 'true'
             if 'requiredPermissions' in metadata:
                 row['metadata']['requiredPermissions'] = json.dumps(metadata['requiredPermissions'])
             if 'spawnPoints' in metadata:
@@ -376,6 +380,10 @@ class SceneChangesStream(DecentralandStreamAPIStream):
             if 'policy' in metadata and metadata['policy'] is not None:
                 if 'blacklist' in metadata['policy']:
                     row['metadata']['policy']['blacklist'] = json.dumps(metadata['policy']['blacklist'])
+                if 'fly' in metadata['policy'] and type(metadata['policy']['fly']) is str:
+                    metadata['policy']['fly'] = metadata['policy']['fly'].lower() == 'true'
+                if 'voiceEnabled' in metadata['policy'] and type(metadata['policy']['voiceEnabled']) is str:
+                    metadata['policy']['voiceEnabled'] = metadata['policy']['voiceEnabled'].lower() == 'true'
             if 'requiredPermissions' in metadata:
                 row['metadata']['requiredPermissions'] = json.dumps(metadata['requiredPermissions'])
             if 'spawnPoints' in metadata:
