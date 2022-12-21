@@ -329,7 +329,7 @@ class SceneChangesStream(DecentralandStreamAPIStream):
         context: Optional[dict],
         next_page_token: Optional[Any] = None
     ) -> Dict[str, Any]:
-        next_timestamp = datetime(2000,1,1).timestamp()*1000
+        next_timestamp = datetime.strptime(self.config["catalysts_start_date"], "%Y-%m-%d").timestamp()*1000
         replication_key_value = self.get_starting_replication_key_value(context)
         if next_page_token:
             next_timestamp = next_page_token
@@ -368,6 +368,8 @@ class SceneChangesStream(DecentralandStreamAPIStream):
                     metadata['policy']['fly'] = metadata['policy']['fly'].lower() == 'true'
                 if 'voiceEnabled' in metadata['policy'] and type(metadata['policy']['voiceEnabled']) is str:
                     metadata['policy']['voiceEnabled'] = metadata['policy']['voiceEnabled'].lower() == 'true'
+                if 'teleportPosition' in metadata['policy']:
+                    metadata['policy']['teleportPosition'] = json.dumps(metadata['policy']['teleportPosition'])
             if 'requiredPermissions' in metadata:
                 row['metadata']['requiredPermissions'] = json.dumps(metadata['requiredPermissions'])
             if 'spawnPoints' in metadata:
