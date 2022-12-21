@@ -1,6 +1,6 @@
 """Events stream class for tap-decentraland-api."""
 
-import logging
+import logging, json
 import requests
 from pathlib import Path
 from typing import Any, Dict, Optional, Union, List, Iterable
@@ -20,14 +20,14 @@ from singer_sdk.typing import (
 
 SCHEMAS_DIR = Path(__file__).parent / Path("./schemas")
 
-class EventsStream(RESTStream):
+class SmartItemsStream(RESTStream):
 
     RESULTS_PER_PAGE = 100
 
     @property
     def url_base(self) -> str:
         """Return the API URL root, configurable via tap settings."""
-        return self.config["events_api_url"]
+        return self.config["smart_items_url"]
 
     def parse_response(self, response) -> Iterable[dict]:
         """Parse the response and return an iterator of result rows."""
@@ -71,53 +71,57 @@ class EventsStream(RESTStream):
         self.logger.info(f"Offset: {offset}")
         return {"limit": self.RESULTS_PER_PAGE, "offset": offset, "list":list}
 
-    name = "events"
-    path = "/events"
+    def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
+        """Generate row id"""
+        row['rowId'] = "|".join([row['id'],row['updated_at']])
+
+        for i in range(len(row['assets'])):
+
+            if 'actions' in row['assets'][i]:
+                row['assets'][i]['actions'] = json.dumps(row['assets'][i].get('actions'))
+            if 'contents' in row['assets'][i]:
+                row['assets'][i]['contents'] = json.dumps(row['assets'][i].get('contents'))
+            if 'parameters' in row['assets'][i]:    
+                row['assets'][i]['parameters'] = json.dumps(row['assets'][i].get('parameters'))
+            
+        return row
+
+    name = "smart_items"
+    path = "/assetPacks"
     primary_keys = ['rowId']
     replication_key = None  
     
     schema = PropertiesList(
         Property("rowId", StringType, required=True),
         Property("id", StringType),
-        Property("name", StringType),
-        Property("description", StringType),
-        Property("approved", BooleanType),
-        Property("rejected", BooleanType),
-        Property("highlighted", BooleanType),
-        Property("trending", BooleanType),
-        Property("user", StringType),
-        Property("user_name", StringType),
-        Property("total_attendees", IntegerType),
-        Property("url", StringType),
-        Property("scene_name", StringType),
-        Property("start_at", DateTimeType),
-        Property("finish_at", DateTimeType),
-        Property("next_start_at", DateTimeType),
-        Property("next_finish_at", DateTimeType),
-        Property("all_day", BooleanType),
-        Property("recurrent", BooleanType),
-        Property("recurrent_frequency", StringType),
-        Property("recurrent_setpos", IntegerType),
-        Property("recurrent_monthday", IntegerType),
-        Property("recurrent_weekday_mask", IntegerType),
-        Property("recurrent_month_mask", IntegerType),
-        Property("recurrent_interval", IntegerType),
-        Property("recurrent_count", IntegerType),
-        Property("recurrent_until", DateTimeType),
+        Property("title", StringType),
+        Property("thumbnail", StringType),
         Property("created_at", DateTimeType),
         Property("updated_at", DateTimeType),
-        Property("tile_x", IntegerType),
-        Property("tile_y", IntegerType)
+        Property("eth_address", StringType),
+        Property("assets", ArrayType(ObjectType(
+            Property("id", StringType),
+            Property("asset_pack_id", StringType),
+            Property("name", StringType),
+            Property("model", StringType),
+            Property("thumbnail", StringType),
+            Property("tags", ArrayType(StringType)),
+            Property("category", StringType),
+            Property("created_at", DateTimeType),
+            Property("updated_at", DateTimeType),
+            Property("contents", StringType),
+            Property("created_at", DateTimeType),
+            Property("updated_at", DateTimeType),            
+            Property("metrics", ObjectType(
+                Property("triangles", IntegerType),
+                Property("materials", IntegerType),
+                Property("textures", IntegerType),
+                Property("meshes", IntegerType),
+                Property("bodies", IntegerType),
+                Property("entities", IntegerType))),
+            Property("script", StringType),
+            Property("parameters", StringType),
+            Property("actions", StringType),
+            Property("legacy_id", StringType)
+            )))
     ).to_dict()
-
-
-    def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
-        """Generate row id"""
-        row['rowId'] = "|".join([row['id'],row['updated_at']])
-        
-        position = row.get('position')
-        if position and len(position) >= 2:
-            row['tile_x'] = int(position[0])
-            row['tile_y'] = int(position[1])
-
-        return row

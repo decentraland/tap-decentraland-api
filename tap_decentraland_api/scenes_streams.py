@@ -1,10 +1,12 @@
 """Stream class for tap-decentraland-api."""
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import requests, json, backoff
 
 from pathlib import Path
 from typing import Any, Dict, Optional, Union, List, Iterable, cast
+from singer_sdk.helpers._util import utc_now
+
 
 from sqlalchemy import String
 
@@ -315,12 +317,12 @@ class SceneChangesStream(DecentralandStreamAPIStream):
 
     path = "/content/pointer-changes"
 
-    primary_keys = ['deploymentId']
+    primary_keys = ['scene_hash']
     replication_method = "INCREMENTAL"
-    replication_key = "localTimestamp"
+    replication_key = "entityTimestamp"
     is_sorted = True
     records_jsonpath: str = "$.deltas[*]"
-    next_page_token_jsonpath: str = "$.deltas[-1:].localTimestamp"
+    next_page_token_jsonpath: str = "$.deltas[-1:].entityTimestamp"
     RESULTS_PER_PAGE = 500
     last_id = None
 
@@ -331,6 +333,8 @@ class SceneChangesStream(DecentralandStreamAPIStream):
     ) -> Dict[str, Any]:
         next_timestamp = datetime.strptime(self.config["catalysts_start_date"], "%Y-%m-%d").timestamp()*1000
         replication_key_value = self.get_starting_replication_key_value(context)
+        signpost = self.get_replication_key_signpost(context)
+
         if next_page_token:
             next_timestamp = next_page_token
         elif replication_key_value:
@@ -339,10 +343,18 @@ class SceneChangesStream(DecentralandStreamAPIStream):
         return {
             "limit": self.RESULTS_PER_PAGE,
             "from": next_timestamp,
+            "to": signpost,
             "sortingOrder": "ASC",
+            "sortingField": "entity_timestamp",
             "entityType": "scene",
             "lastId": self.last_id
         }
+
+    def get_replication_key_signpost(
+        self, context: Optional[dict]
+    ) -> Optional[Union[datetime, Any]]:
+        one_day_ago = utc_now() - timedelta(hours = 24)
+        return int(one_day_ago.timestamp()*1000)
 
 
     def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
@@ -350,6 +362,9 @@ class SceneChangesStream(DecentralandStreamAPIStream):
         row['scene_hash'] = row['entityId']
         self.last_id = row['scene_hash']
         del row['entityId']
+
+        row['entityTimestamp'] = int(row['entityTimestamp'])
+        row['localTimestamp'] = int(row['localTimestamp'])
         
         # Flatten some properties into json strings
         metadata = row.get('metadata')
@@ -382,7 +397,6 @@ class SceneChangesStream(DecentralandStreamAPIStream):
         return row
 
     schema = PropertiesList(
-        Property("deploymentId", IntegerType, required=True),
         Property("scene_hash", StringType, required=True),
         Property("type", StringType),
         Property("localTimestamp", IntegerType),

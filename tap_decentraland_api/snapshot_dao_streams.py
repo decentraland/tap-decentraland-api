@@ -110,6 +110,7 @@ class SnapshotProposalsStream(SnapshotDaoStream):
         # Escape backslashes   
         row['snapshot_proposal']['name'] = escape_backslashes(row['snapshot_proposal'].get('name'))
         row['snapshot_proposal']['body'] = escape_backslashes(row['snapshot_proposal'].get('body'))
+        row['snapshot_proposal']['snapshot'] = int(row['snapshot_proposal'].get('snapshot'))
         row['title'] = escape_backslashes(row.get('title'))
         row['description'] = escape_backslashes(row.get('description'))
         row['enacted_description'] = escape_backslashes(row.get('enacted_description'))
