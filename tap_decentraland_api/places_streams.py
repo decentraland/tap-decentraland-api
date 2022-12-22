@@ -11,6 +11,7 @@ from singer_sdk.typing import (
     BooleanType,
     DateTimeType,
     IntegerType,
+    NumberType,
     PropertiesList,
     Property,
     StringType,
@@ -61,7 +62,7 @@ class PlacesStream(RESTStream):
         Property("likes", IntegerType),
         Property("dislikes", IntegerType),
         Property("categories", StringType),
-        Property("like_rate", IntegerType),
+        Property("like_rate", NumberType),
         Property("highlighted", BooleanType),
         Property("highlighted_image", StringType),
         Property("featured", BooleanType),
@@ -76,6 +77,15 @@ class PlacesStream(RESTStream):
 
     def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
         """Generate row id"""
-        row['rowId'] = "|".join([row['id'],row['updated_at']])
-        print('yes')
+        row['rowId'] = "|".join([row['id'], row['updated_at']])
+        
+        if "tags" in row: 
+            row['tags'] = ",".join(row['tags'])
+
+        if "positions" in row: 
+            row['positions'] = ";".join(row['positions'])
+
+        if "categories" in row: 
+            row['categories'] = ",".join(row['categories'])
+
         return row
