@@ -8,7 +8,7 @@ license = "Apache 2.0"
 [tool.poetry.dependencies]
 python = "<3.9,>=3.8"
 requests = "^2.25.1"
-singer-sdk = "^0.4.6"
+singer-sdk = "^0.16.0"
 eth_utils = "^1.10.0"
 pycryptodome = "^3.10.1"
 
