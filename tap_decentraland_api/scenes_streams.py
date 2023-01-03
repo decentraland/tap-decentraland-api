@@ -257,6 +257,8 @@ class SceneStream(DecentralandStreamAPIStream):
                     metadata['policy']['fly'] = metadata['policy']['fly'].lower() == 'true'
                 if 'voiceEnabled' in metadata['policy'] and type(metadata['policy']['voiceEnabled']) is str:
                     metadata['policy']['voiceEnabled'] = metadata['policy']['voiceEnabled'].lower() == 'true'
+                if 'teleportPosition' in metadata['policy'] and type(metadata['policy']['teleportPosition']) is not str:
+                    metadata['policy']['teleportPosition'] = str(metadata['policy']['teleportPosition'])
             if 'requiredPermissions' in metadata:
                 row['metadata']['requiredPermissions'] = json.dumps(metadata['requiredPermissions'])
             if 'spawnPoints' in metadata:
