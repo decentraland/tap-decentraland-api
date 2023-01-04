@@ -35,6 +35,44 @@ from singer_sdk.typing import (
 
 SCHEMAS_DIR = Path(__file__).parent / Path("./schemas")
 
+def processSceneMetadata(metadata):
+    if 'tags' in metadata:
+        # Tags are dumped as json
+        metadata['tags'] = json.dumps(metadata['tags'])
+    if 'scene' in metadata:
+        # These are dumped as json
+        if 'parcels' in metadata['scene']:
+            metadata['scene']['parcels'] = json.dumps(metadata['scene']['parcels'])
+        if 'base' in metadata['scene']:
+            metadata['scene']['base'] = json.dumps(metadata['scene']['base'])
+    if 'policy' in metadata and metadata['policy'] is not None:
+        # Blacklist dumped as json
+        if 'blacklist' in metadata['policy']:
+            metadata['policy']['blacklist'] = json.dumps(metadata['policy']['blacklist'])
+        
+        # Fly should be boolean, but can be string
+        if 'fly' in metadata['policy'] and isinstance(metadata['policy']['fly'], str):
+            metadata['policy']['fly'] = metadata['policy']['fly'].lower() == 'true'
+
+        # voiceEnabled should be boolean, but can be string
+        if 'voiceEnabled' in metadata['policy'] and isinstance(metadata['policy']['voiceEnabled'], str):
+            metadata['policy']['voiceEnabled'] = metadata['policy']['voiceEnabled'].lower() == 'true'
+        # teleportPosition should be string, but can be boolean
+        if 'teleportPosition' in metadata['policy'] and not isinstance(metadata['policy']['teleportPosition'], str):
+            metadata['policy']['teleportPosition'] = str(metadata['policy']['teleportPosition'])
+    
+    # These are dumped as json
+    if 'requiredPermissions' in metadata:
+        metadata['requiredPermissions'] = json.dumps(metadata['requiredPermissions'])
+    if 'spawnPoints' in metadata:
+        metadata['spawnPoints'] = json.dumps(metadata['spawnPoints'])
+    if 'tags' in metadata:
+        metadata['tags'] = json.dumps(metadata['tags'])
+    if 'source' in metadata:
+        metadata['source'] = json.dumps(metadata['source'])
+
+    return metadata
+
 class DecentralandStreamAPIStream(RESTStream):
     """DecentralandAPI stream class."""
 
@@ -243,31 +281,7 @@ class SceneStream(DecentralandStreamAPIStream):
         # Flatten some properties into json strings
         metadata = row.get('metadata')
         if metadata:
-            if 'tags' in metadata:
-                row['metadata']['tags'] = json.dumps(metadata['tags'])
-            if 'scene' in metadata:
-                if 'parcels' in metadata['scene']:
-                    row['metadata']['scene']['parcels'] = json.dumps(metadata['scene']['parcels'])
-                if 'base' in metadata['scene']:
-                    row['metadata']['scene']['base'] = json.dumps(metadata['scene']['base'])
-            if 'policy' in metadata and metadata['policy'] is not None:
-                if 'blacklist' in metadata['policy']:
-                    row['metadata']['policy']['blacklist'] = json.dumps(metadata['policy']['blacklist'])
-                if 'fly' in metadata['policy'] and type(metadata['policy']['fly']) is str:
-                    metadata['policy']['fly'] = metadata['policy']['fly'].lower() == 'true'
-                if 'voiceEnabled' in metadata['policy'] and type(metadata['policy']['voiceEnabled']) is str:
-                    metadata['policy']['voiceEnabled'] = metadata['policy']['voiceEnabled'].lower() == 'true'
-                if 'teleportPosition' in metadata['policy'] and type(metadata['policy']['teleportPosition']) is not str:
-                    metadata['policy']['teleportPosition'] = str(metadata['policy']['teleportPosition'])
-            if 'requiredPermissions' in metadata:
-                row['metadata']['requiredPermissions'] = json.dumps(metadata['requiredPermissions'])
-            if 'spawnPoints' in metadata:
-                row['metadata']['spawnPoints'] = json.dumps(metadata['spawnPoints'])
-            if 'tags' in metadata:
-                row['metadata']['tags'] = json.dumps(metadata['tags'])
-            if 'source' in metadata:
-                row['metadata']['source'] = json.dumps(metadata['source'])
-
+            row['metadata'] = processSceneMetadata(metadata)
         return row
 
     schema = PropertiesList(
@@ -371,30 +385,7 @@ class SceneChangesStream(DecentralandStreamAPIStream):
         # Flatten some properties into json strings
         metadata = row.get('metadata')
         if metadata:
-            if 'tags' in metadata:
-                row['metadata']['tags'] = json.dumps(metadata['tags'])
-            if 'scene' in metadata:
-                if 'parcels' in metadata['scene']:
-                    row['metadata']['scene']['parcels'] = json.dumps(metadata['scene']['parcels'])
-                if 'base' in metadata['scene']:
-                    row['metadata']['scene']['base'] = json.dumps(metadata['scene']['base'])
-            if 'policy' in metadata and metadata['policy'] is not None:
-                if 'blacklist' in metadata['policy']:
-                    row['metadata']['policy']['blacklist'] = json.dumps(metadata['policy']['blacklist'])
-                if 'fly' in metadata['policy'] and type(metadata['policy']['fly']) is str:
-                    metadata['policy']['fly'] = metadata['policy']['fly'].lower() == 'true'
-                if 'voiceEnabled' in metadata['policy'] and type(metadata['policy']['voiceEnabled']) is str:
-                    metadata['policy']['voiceEnabled'] = metadata['policy']['voiceEnabled'].lower() == 'true'
-                if 'teleportPosition' in metadata['policy']:
-                    metadata['policy']['teleportPosition'] = json.dumps(metadata['policy']['teleportPosition'])
-            if 'requiredPermissions' in metadata:
-                row['metadata']['requiredPermissions'] = json.dumps(metadata['requiredPermissions'])
-            if 'spawnPoints' in metadata:
-                row['metadata']['spawnPoints'] = json.dumps(metadata['spawnPoints'])
-            if 'tags' in metadata:
-                row['metadata']['tags'] = json.dumps(metadata['tags'])
-            if 'source' in metadata:
-                row['metadata']['source'] = json.dumps(metadata['source'])
+            row['metadata'] = processSceneMetadata(metadata)
 
         return row
 
