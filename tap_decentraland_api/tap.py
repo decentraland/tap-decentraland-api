@@ -34,9 +34,9 @@ from tap_decentraland_api.places_streams import (
 )
 
 from tap_decentraland_api.scenes_streams import (
+    ContentSnapshotStream,
     SceneChangesStream,
     SceneMappingStream,
-    SceneSnapshotStream,
     SceneStream
 )
 
@@ -54,10 +54,10 @@ STREAM_TYPES = [
     CoingeckoManaStream,
     EventsStream,
     PlacesStream,
-    SceneChangesStream,
+    ContentSnapshotStream,
     SceneMappingStream,
-    SceneSnapshotStream,
     SceneStream,
+    SceneChangesStream,
     SnapshotProposalsStream,
     SnapshotVotesStream,
     SmartItemsStream,
@@ -71,22 +71,33 @@ class TapDecentralandAPI(Tap):
     name = "tap-decentraland-api"
 
     config_jsonschema = PropertiesList(
-        Property("api_url", StringType, default="https://api.decentraland.org"),
-        Property("coingecko_url", StringType, default="https://api.coingecko.com/api/v3"),
+        Property("api_url", StringType,
+                 default="https://api.decentraland.org"),
+        Property("coingecko_url", StringType,
+                 default="https://api.coingecko.com/api/v3"),
         Property("coingecko_start_date", DateTimeType, default="2017-10-28"),
         Property("catalysts_start_date", DateTimeType, default="2000-01-01"),
-        Property("events_api_url", StringType, default="https://events.decentraland.org/api"),
-        Property("governance_snapshot_api_url", StringType, default="https://governance.decentraland.org/api"),
-        Property("governance_aragon_api_url", StringType, default="https://api.thegraph.com/subgraphs/name/aragon/aragon-voting-mainnet"),
-        Property("peer_api_url", StringType, default="https://peer-lb.decentraland.org"),
-        Property("places_api_url", StringType, default="https://places.decentraland.org/api"),
+        Property("events_api_url", StringType,
+                 default="https://events.decentraland.org/api"),
+        Property("governance_snapshot_api_url", StringType,
+                 default="https://governance.decentraland.org/api"),
+        Property("governance_aragon_api_url", StringType,
+                 default="https://api.thegraph.com/subgraphs/name/aragon/aragon-voting-mainnet"),
+        Property("peer_api_url", StringType,
+                 default="https://peer-lb.decentraland.org"),
+        Property("places_api_url", StringType,
+                 default="https://places.decentraland.org/api"),
         Property("scenes_per_run", IntegerType, default=2000),
-        Property("smart_items_url", StringType, default="https://builder-api.decentraland.org/v1"),
+        Property("smart_items_url", StringType,
+                 default="https://builder-api.decentraland.org/v1"),
+        Property("sync_content_after", IntegerType,
+                 description="Sync content after certain snapshot date in unix timestamp", default=1680998400000),
     ).to_dict()
 
     def discover_streams(self) -> List[Stream]:
         """Return a list of discovered streams."""
         return [stream_class(tap=self) for stream_class in STREAM_TYPES]
+
 
 # CLI Execution:
 cli = TapDecentralandAPI.cli

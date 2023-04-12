@@ -1,32 +1,20 @@
 """Stream class for tap-decentraland-api."""
 
 from datetime import datetime, timedelta
-import requests, json, backoff
+import requests
+import json
+import backoff
 
 from pathlib import Path
-from typing import Any, Dict, Optional, Union, List, Iterable, cast
+from typing import Any, Dict, Optional, Union, Iterable, cast
 from singer_sdk.helpers._util import utc_now
 
-
-from sqlalchemy import String
-
-
 from singer_sdk.streams import RESTStream
-
-
-from singer_sdk.authenticators import (
-    APIAuthenticatorBase,
-    SimpleAuthenticator,
-    OAuthAuthenticator,
-    OAuthJWTAuthenticator
-)
 
 from singer_sdk.typing import (
     ArrayType,
     BooleanType,
-    DateTimeType,
     IntegerType,
-    NumberType,
     ObjectType,
     PropertiesList,
     Property,
@@ -35,6 +23,7 @@ from singer_sdk.typing import (
 
 SCHEMAS_DIR = Path(__file__).parent / Path("./schemas")
 
+
 def processSceneMetadata(metadata):
     if 'tags' in metadata:
         # Tags are dumped as json
@@ -42,28 +31,33 @@ def processSceneMetadata(metadata):
     if 'scene' in metadata:
         # These are dumped as json
         if 'parcels' in metadata['scene']:
-            metadata['scene']['parcels'] = json.dumps(metadata['scene']['parcels'])
+            metadata['scene']['parcels'] = json.dumps(
+                metadata['scene']['parcels'])
         if 'base' in metadata['scene']:
             metadata['scene']['base'] = json.dumps(metadata['scene']['base'])
     if 'policy' in metadata and metadata['policy'] is not None:
         # Blacklist dumped as json
         if 'blacklist' in metadata['policy']:
-            metadata['policy']['blacklist'] = json.dumps(metadata['policy']['blacklist'])
-        
+            metadata['policy']['blacklist'] = json.dumps(
+                metadata['policy']['blacklist'])
+
         # Fly should be boolean, but can be string
         if 'fly' in metadata['policy'] and isinstance(metadata['policy']['fly'], str):
             metadata['policy']['fly'] = metadata['policy']['fly'].lower() == 'true'
 
         # voiceEnabled should be boolean, but can be string
         if 'voiceEnabled' in metadata['policy'] and isinstance(metadata['policy']['voiceEnabled'], str):
-            metadata['policy']['voiceEnabled'] = metadata['policy']['voiceEnabled'].lower() == 'true'
+            metadata['policy']['voiceEnabled'] = metadata['policy']['voiceEnabled'].lower(
+            ) == 'true'
         # teleportPosition should be string, but can be boolean
         if 'teleportPosition' in metadata['policy'] and not isinstance(metadata['policy']['teleportPosition'], str):
-            metadata['policy']['teleportPosition'] = str(metadata['policy']['teleportPosition'])
-    
+            metadata['policy']['teleportPosition'] = str(
+                metadata['policy']['teleportPosition'])
+
     # These are dumped as json
     if 'requiredPermissions' in metadata:
-        metadata['requiredPermissions'] = json.dumps(metadata['requiredPermissions'])
+        metadata['requiredPermissions'] = json.dumps(
+            metadata['requiredPermissions'])
     if 'spawnPoints' in metadata:
         metadata['spawnPoints'] = json.dumps(metadata['spawnPoints'])
     if 'tags' in metadata:
@@ -72,6 +66,7 @@ def processSceneMetadata(metadata):
         metadata['source'] = json.dumps(metadata['source'])
 
     return metadata
+
 
 class DecentralandStreamAPIStream(RESTStream):
     """DecentralandAPI stream class."""
@@ -82,56 +77,90 @@ class DecentralandStreamAPIStream(RESTStream):
         return self.config["peer_api_url"]
 
 
-class SceneSnapshotStream(DecentralandStreamAPIStream):
-    name = "scene_snapshot_hash"
-
-    path = "/content/snapshot/scene"
-
-    primary_keys = ['hash']
+class ContentSnapshotStream(DecentralandStreamAPIStream):
+    name = "content_snapshot"
+    path = "/content/snapshots"
+    record_jsonpath = "$[*]"
+    primary_keys = ["hash"]
+    replication_key = "init_timestamp"
     replication_method = "INCREMENTAL"
-    replication_key = 'lastIncludedDeploymentTimestamp'
-    
+
+    def parse_response(self, response) -> Iterable[Dict]:
+        """Parse data"""
+        data = response.json()
+
+        for snapshot in data:
+            # Avoid syncing snapshots before a certain date.
+            syncAfter = self.config['sync_content_after']
+
+            if syncAfter is not None:
+                if snapshot['timeRange']['initTimestamp'] < syncAfter:
+                    self.logger.warn(
+                        'Hash %s is before sync date %s, skipping', snapshot['hash'], syncAfter)
+                    continue
+
+            yield {
+                "hash": snapshot['hash'],
+                "init_timestamp": snapshot['timeRange']['initTimestamp'],
+                "end_timestamp": snapshot['timeRange']['endTimestamp'],
+                "replaced_snapshots_hashes": ','.join(snapshot['replacedSnapshotHashes']),
+                "number_of_entities": snapshot['numberOfEntities'],
+                "generation_timestamp": snapshot['generationTimestamp'],
+            }
 
     def get_child_context(self, record: dict, context: Optional[dict]) -> dict:
         """Return a context dictionary for child streams."""
+        self.logger.info(f'get context child {record["hash"]}')
+
         return {
             "hash": record['hash']
         }
 
-
-    def parse_response(self, response) -> Iterable[dict]:
-        """Parse data"""
-        data =response.json()
-        yield data
-
-
     schema = PropertiesList(
         Property("hash", StringType, required=True),
-        Property("lastIncludedDeploymentTimestamp", IntegerType)
+        Property("init_timestamp", IntegerType),
+        Property("end_timestamp", IntegerType),
+        Property("replaced_snapshots_hashes", StringType),
+        Property("number_of_entities", IntegerType),
+        Property("generation_timestamp", IntegerType),
     ).to_dict()
-
 
 
 class SceneMappingStream(DecentralandStreamAPIStream):
     name = "scene_mapping"
-
     path = "/content/contents/{hash}"
-
     primary_keys = ['global_hash', 'scene_hash']
-    parent_stream_type = SceneSnapshotStream
-    
+    parent_stream_type = ContentSnapshotStream
+
     def parse_response(self, response) -> Iterable[dict]:
         """Parse data"""
 
-        data =response.json()
-        for d in data:
-            row = {'scene_hash': d[0], 'parcels': d[1]}
-            yield row
+        for line in response.iter_lines():
+            # Avoid header line
+            if line is None or line == b'### Decentraland json snapshot':
+                continue
 
+            data = json.loads(line)
 
-    def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
-        """Add hash"""
+            # Avoid mapping other entities
+            if data['entityType'] != 'scene':
+                continue
+
+            yield {
+                "scene_hash": data['entityId'],
+                "parcels": data['pointers']
+            }
+
+    def get_child_context(self, record: dict, context: Optional[dict]) -> dict:
+        """Return a context dictionary for child streams."""
+        return {
+            "scene_hash": record['scene_hash']
+        }
+
+    def post_process(self, row: dict, context: Optional[dict]) -> dict:
+        """Post process a row"""
         row['global_hash'] = context['hash']
+
         return row
 
     schema = PropertiesList(
@@ -141,53 +170,89 @@ class SceneMappingStream(DecentralandStreamAPIStream):
     ).to_dict()
 
 
-
 class SceneStream(DecentralandStreamAPIStream):
-
     name = "scene"
-
     path = "/content/entities/scene"
-
     primary_keys = ['scene_hash']
-    replication_key = None
-
+    parent_stream_type = SceneMappingStream
 
     def request_records(self, context: Optional[dict]) -> Iterable[dict]:
-        """Need to override to avoid reprocessing data
-        """
+        """Need to override to avoid reprocessing data"""
+
         state = self.get_context_state(context)
-        
+
         if 'scene_hashes' in state:
-            self.logger.warn(f"(stream: {self.name}) Skipping any hash matching {len(state['scene_hashes'])} saved hashes")
+            self.logger.warn(
+                f"(stream: {self.name}) Skipping any hash matching {len(state['scene_hashes'])} saved hashes")
         else:
-            self.logger.warn(f"(stream: {self.name}) No existing hashes saved, full sync")
+            self.logger.warn(
+                f"(stream: {self.name}) No existing hashes saved, full sync")
             state['scene_hashes'] = []
 
-        r_snapshot = requests.get(f'{self.url_base}/content/snapshot/scene')
-        snapshot = r_snapshot.json()
+        if context['scene_hash'] in state['scene_hashes']:
+            self.logger.warn(
+                f"(stream: {self.name}) Skipping requesting hash {context['scene_hash']}")
+            return []
 
-        r_mapping = requests.get(f'{self.url_base}/content/contents/{ snapshot["hash"] }')
-        mapping = r_mapping.json()
+        prepared_request = self.prepare_request(
+            {"id": context['scene_hash']}, context, next_page_token=None
+        )
 
-        i=0
-        skip=0
-        for h in mapping:
-            hash = h[0]
-            if hash not in state['scene_hashes'] and i < self.config['scenes_per_run']:
-                prepared_request = self.prepare_request(
-                    {"id": hash}, context, next_page_token=None
+        response = self._request_with_backoff(prepared_request, context)
+
+        parsedResponse = self.parse_response(response)
+
+        for row in parsedResponse:
+            yield row
+
+        state['scene_hashes'].append(context['scene_hash'])
+
+    @backoff.on_exception(
+        backoff.expo,
+        (requests.exceptions.RequestException),
+        max_tries=8,
+        giveup=lambda e: e.response is not None and 400 <= e.response.status_code < 500 and e.response.status_code != 429,
+        factor=2,
+    )
+    def _request_with_backoff(
+        self, prepared_request, context: Optional[dict]
+    ) -> requests.Response:
+        response = self.requests_session.send(prepared_request)
+        if self._LOG_REQUEST_METRICS:
+            extra_tags = {}
+            if self._LOG_REQUEST_METRIC_URLS:
+                extra_tags["url"] = cast(str, prepared_request.path_url)
+            self._write_request_duration_log(
+                endpoint=self.path,
+                response=response,
+                context=context,
+                extra_tags=extra_tags,
+            )
+        if response.status_code in [401, 403]:
+            self.logger.info(
+                "Failed request for {}".format(prepared_request.url))
+            self.logger.info(
+                f"Reason: {response.status_code} - {str(response.content)}"
+            )
+            raise RuntimeError(
+                "Requested resource was unauthorized, forbidden, or not found."
+            )
+        if response.status_code == 429:
+            self.logger.info(
+                "Throttled request for {}".format(prepared_request.url))
+            raise requests.exceptions.RequestException(
+                request=prepared_request,
+                response=response
+            )
+        elif response.status_code >= 400:
+            raise RuntimeError(
+                f"Error making request to API: {prepared_request.url} "
+                f"[{response.status_code} - {str(response.content)}]".replace(
+                    "\\n", "\n"
                 )
-                resp = self._request_with_backoff(prepared_request, context)
-                for row in self.parse_response(resp):
-                    yield row
-                i+=1
-                state['scene_hashes'].append(hash)
-                if skip>0:
-                    self.logger.warn(f"(stream: {self.name}) Skipped {skip} hashes")
-                    skip=0
-            else:
-                skip+=1
-    
+            )
+
+        return response
 
     def prepare_request(
         self, params: dict, context: Optional[dict], next_page_token: Optional[Any]
@@ -217,59 +282,12 @@ class SceneStream(DecentralandStreamAPIStream):
         )
         return request
 
-
-    @backoff.on_exception(
-        backoff.expo,
-        (requests.exceptions.RequestException),
-        max_tries=8,
-        giveup=lambda e: e.response is not None and 400 <= e.response.status_code < 500 and e.response.status_code != 429,
-        factor=2,
-    )
-    def _request_with_backoff(
-        self, prepared_request, context: Optional[dict]
-    ) -> requests.Response:
-        response = self.requests_session.send(prepared_request)
-        if self._LOG_REQUEST_METRICS:
-            extra_tags = {}
-            if self._LOG_REQUEST_METRIC_URLS:
-                extra_tags["url"] = cast(str, prepared_request.path_url)
-            self._write_request_duration_log(
-                endpoint=self.path,
-                response=response,
-                context=context,
-                extra_tags=extra_tags,
-            )
-        if response.status_code in [401, 403]:
-            self.logger.info("Failed request for {}".format(prepared_request.url))
-            self.logger.info(
-                f"Reason: {response.status_code} - {str(response.content)}"
-            )
-            raise RuntimeError(
-                "Requested resource was unauthorized, forbidden, or not found."
-            )
-        if response.status_code == 429:
-            self.logger.info("Throttled request for {}".format(prepared_request.url))
-            raise requests.exceptions.RequestException(
-                request=prepared_request,
-                response=response
-            )
-        elif response.status_code >= 400:
-            raise RuntimeError(
-                f"Error making request to API: {prepared_request.url} "
-                f"[{response.status_code} - {str(response.content)}]".replace(
-                    "\\n", "\n"
-                )
-            )
-
-        return response
-
     def parse_response(self, response) -> Iterable[dict]:
         """Parse data"""
 
-        data =response.json()
+        data = response.json()
         for row in data:
             yield row
-
 
     def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
         """Rename and flatten some fields"""
@@ -277,7 +295,7 @@ class SceneStream(DecentralandStreamAPIStream):
         del row['id']
 
         row['content_files'] = len(row['content'])
-        
+
         # Flatten some properties into json strings
         metadata = row.get('metadata')
         if metadata:
@@ -323,7 +341,7 @@ class SceneStream(DecentralandStreamAPIStream):
             Property("tags", StringType),
 
         )),
-        
+
     ).to_dict()
 
 
@@ -347,15 +365,17 @@ class SceneChangesStream(DecentralandStreamAPIStream):
         context: Optional[dict],
         next_page_token: Optional[Any] = None
     ) -> Dict[str, Any]:
-        next_timestamp = datetime.strptime(self.config["catalysts_start_date"], "%Y-%m-%d").timestamp()*1000
-        replication_key_value = self.get_starting_replication_key_value(context)
+        next_timestamp = datetime.strptime(
+            self.config["catalysts_start_date"], "%Y-%m-%d").timestamp()*1000
+        replication_key_value = self.get_starting_replication_key_value(
+            context)
         signpost = self.get_replication_key_signpost(context)
 
         if next_page_token:
             next_timestamp = next_page_token
         elif replication_key_value:
             next_timestamp = replication_key_value
-        
+
         return {
             "limit": self.RESULTS_PER_PAGE,
             "from": next_timestamp,
@@ -369,9 +389,8 @@ class SceneChangesStream(DecentralandStreamAPIStream):
     def get_replication_key_signpost(
         self, context: Optional[dict]
     ) -> Optional[Union[datetime, Any]]:
-        one_day_ago = utc_now() - timedelta(hours = 24)
+        one_day_ago = utc_now() - timedelta(hours=24)
         return int(one_day_ago.timestamp()*1000)
-
 
     def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
         """Rename and flatten some fields"""
@@ -381,7 +400,7 @@ class SceneChangesStream(DecentralandStreamAPIStream):
 
         row['entityTimestamp'] = int(row['entityTimestamp'])
         row['localTimestamp'] = int(row['localTimestamp'])
-        
+
         # Flatten some properties into json strings
         metadata = row.get('metadata')
         if metadata:
@@ -430,5 +449,5 @@ class SceneChangesStream(DecentralandStreamAPIStream):
             Property("tags", StringType),
 
         )),
-        
+
     ).to_dict()
