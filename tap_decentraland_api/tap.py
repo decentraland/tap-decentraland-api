@@ -49,6 +49,11 @@ from tap_decentraland_api.snapshot_dao_streams import (
     SnapshotVotesStream
 )
 
+from tap_decentraland_api.profiles_streams import (
+    ProfileChangesStream
+)
+
+
 STREAM_TYPES = [
     AragonProposalsStream,
     CoingeckoManaStream,
@@ -61,7 +66,8 @@ STREAM_TYPES = [
     SnapshotProposalsStream,
     SnapshotVotesStream,
     SmartItemsStream,
-    TilesStream
+    TilesStream,
+    ProfileChangesStream
 ]
 
 
