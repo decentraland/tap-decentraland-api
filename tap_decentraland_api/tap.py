@@ -24,6 +24,7 @@ from tap_decentraland_api.aragon_dao_streams import (
 from tap_decentraland_api.coingecko_mana_stream import (
     CoingeckoManaStream
 )
+from tap_decentraland_api.comms_streams import CommsPeersStream
 
 from tap_decentraland_api.events_streams import (
     EventsStream
@@ -67,7 +68,8 @@ STREAM_TYPES = [
     SnapshotVotesStream,
     SmartItemsStream,
     TilesStream,
-    ProfileChangesStream
+    ProfileChangesStream,
+    CommsPeersStream
 ]
 
 
