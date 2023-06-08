@@ -66,7 +66,7 @@ class CommsPeersStream(DecentralandStreamAPIStream):
         if "parcel" in row:
             row['parcel'] = "|".join(str(coord) for coord in row['parcel'])
 
-        row['server'] = self.config.get('peer_url')
+        row['server'] = self.config["peer_api_url"]
 
         row['last_ping'] = row['lastPing']
 
