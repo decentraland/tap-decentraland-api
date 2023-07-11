@@ -24,7 +24,7 @@ class DecentralandStreamAPIStream(RESTStream):
     @property
     def url_base(self) -> str:
         """Return the API URL root, configurable via tap settings."""
-        return self.config["peer_api_url"]
+        return ""
 
     def parse_response(self, response: requests.Response) -> Iterable[dict]:
         self.request_timestamp = datetime.datetime.utcnow().isoformat()
@@ -37,7 +37,7 @@ class CommsPeersStream(DecentralandStreamAPIStream):
 
     name = "peers"
     path = "/comms/peers"
-    primary_keys = ["id"]
+    primary_keys = ["id", "time_extracted"]
     records_jsonpath: str = "$.peers[*]"
     schema = th.PropertiesList(
         th.Property(
@@ -46,7 +46,7 @@ class CommsPeersStream(DecentralandStreamAPIStream):
             description="Peer id",
         ),
         th.Property(
-            "address",
+            "wallet_id",
             th.StringType,
             description="Peer address",
         ),
@@ -55,21 +55,32 @@ class CommsPeersStream(DecentralandStreamAPIStream):
             th.IntegerType,
             description="Peer last ping in unix timestamp",
         ),
-        th.Property("parcel", th.StringType,
+        th.Property("position", th.StringType,
                     description="Peer position in world"),
         th.Property("server", th.StringType, description="Peer server"),
         th.Property("time_extracted", th.DateTimeType,
                     description="Request timestamp")
     ).to_dict()
 
+    def partitions(self):
+        return [{"server": server} for server in self.config["peers"].split(",")]
+
+    def get_url(self, context: Optional[dict]) -> str:
+        print(f'Server {context["server"]}')
+
+        server = context["server"]
+        return server + self.path
+
     def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
         if "parcel" in row:
-            row['parcel'] = "|".join(str(coord) for coord in row['parcel'])
+            row['position'] = "|".join(str(coord) for coord in row['parcel'])
 
         row['server'] = self.config.get("peer_api_url")
 
         row['last_ping'] = row['lastPing']
 
         row['time_extracted'] = self.request_timestamp
+
+        row['wallet_id'] = row['address']
 
         return row

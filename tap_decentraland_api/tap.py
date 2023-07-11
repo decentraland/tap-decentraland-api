@@ -100,6 +100,12 @@ class TapDecentralandAPI(Tap):
                  default="https://builder-api.decentraland.org/v1"),
         Property("sync_content_after", IntegerType,
                  description="Sync content after certain snapshot date in unix timestamp", default=1680998400000),
+        Property(
+            "peers",
+            StringType,
+            description="Peers to sync, comma separated",
+            default="https://peer-eu1.decentraland.org,https://peer.decentral.io",
+        ),
     ).to_dict()
 
     def discover_streams(self) -> List[Stream]:
