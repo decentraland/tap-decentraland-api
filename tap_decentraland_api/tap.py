@@ -41,8 +41,9 @@ from tap_decentraland_api.scenes_streams import (
     SceneStream
 )
 
-from tap_decentraland_api.smart_items_streams import (
-    SmartItemsStream
+from tap_decentraland_api.builder_streams import (
+    SmartItemsStream,
+    TemplatesStream
 )
 
 from tap_decentraland_api.snapshot_dao_streams import (
@@ -69,7 +70,8 @@ STREAM_TYPES = [
     SmartItemsStream,
     TilesStream,
     ProfileChangesStream,
-    CommsPeersStream
+    CommsPeersStream,
+    TemplatesStream
 ]
 
 
@@ -96,7 +98,7 @@ class TapDecentralandAPI(Tap):
         Property("places_api_url", StringType,
                  default="https://places.decentraland.org/api"),
         Property("scenes_per_run", IntegerType, default=2000),
-        Property("smart_items_url", StringType,
+        Property("builder_api_url", StringType,
                  default="https://builder-api.decentraland.org/v1"),
         Property("sync_content_after", IntegerType,
                  description="Sync content after certain snapshot date in unix timestamp", default=1680998400000),
