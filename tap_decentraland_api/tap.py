@@ -62,6 +62,7 @@ STREAM_TYPES = [
     CoingeckoManaStream,
     EventsStream,
     PlacesStream,
+    WorldsStream,
     ContentSnapshotStream,
     SceneMappingStream,
     SceneStream,
