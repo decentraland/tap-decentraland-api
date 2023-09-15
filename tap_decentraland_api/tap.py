@@ -31,7 +31,8 @@ from tap_decentraland_api.events_streams import (
 )
 
 from tap_decentraland_api.places_streams import (
-    PlacesStream
+    PlacesStream,
+    WorldsStream
 )
 
 from tap_decentraland_api.scenes_streams import (
@@ -61,6 +62,7 @@ STREAM_TYPES = [
     CoingeckoManaStream,
     EventsStream,
     PlacesStream,
+    WorldsStream,
     ContentSnapshotStream,
     SceneMappingStream,
     SceneStream,
