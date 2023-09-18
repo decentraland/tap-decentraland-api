@@ -107,7 +107,8 @@ class EventsStream(RESTStream):
         Property("created_at", DateTimeType),
         Property("updated_at", DateTimeType),
         Property("tile_x", IntegerType),
-        Property("tile_y", IntegerType)
+        Property("tile_y", IntegerType),
+        Property("world", BooleanType)
     ).to_dict()
 
 
