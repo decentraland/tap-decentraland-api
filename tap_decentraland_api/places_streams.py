@@ -115,6 +115,7 @@ class WorldsStream(RESTStream):
     schema = PropertiesList(
         Property("rowId", StringType, required=True),
         Property("id", StringType),
+        Property("world_name", StringType),
         Property("title", StringType),
         Property("description", StringType),
         Property("image", StringType),
