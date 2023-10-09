@@ -103,7 +103,7 @@ class ProfileChangesStream(DecentralandStreamAPIStream):
         Property("profile_hash", StringType, required=True),
         Property("entity_timestamp", IntegerType),
         Property("local_timestamp", IntegerType),
-        Property("pointer", StringType),
+        Property("wallet_id", StringType),
         Property("name", StringType),
         Property("description", StringType),
         Property("avatar", StringType),
