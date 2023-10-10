@@ -42,7 +42,7 @@ class ProfileChangesStream(DecentralandStreamAPIStream):
     next_page_token_jsonpath: str = "$.deltas[-1:].entityTimestamp"
     RESULTS_PER_PAGE = 500
     last_id = None
-    max_rows = 10000
+    max_rows = 5000
     records_fetched = 0
     last_fetched_timestamp = None
 
