@@ -5,8 +5,10 @@ import json
 
 
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Iterable, Optional, Union
+import requests
 from singer_sdk.helpers._util import utc_now
+from singer_sdk import metrics
 
 from singer_sdk.streams import RESTStream
 
@@ -30,11 +32,8 @@ class DecentralandStreamAPIStream(RESTStream):
 
 
 class ProfileChangesStream(DecentralandStreamAPIStream):
-
     name = "profile_changes"
-
     path = "/content/pointer-changes"
-
     primary_keys = ['profile_hash']
     replication_method = "INCREMENTAL"
     replication_key = "entityTimestamp"
@@ -43,6 +42,9 @@ class ProfileChangesStream(DecentralandStreamAPIStream):
     next_page_token_jsonpath: str = "$.deltas[-1:].entityTimestamp"
     RESULTS_PER_PAGE = 500
     last_id = None
+    max_rows = 10000
+    records_fetched = 0
+    last_fetched_timestamp = None
 
     def get_url_params(
         self,
@@ -75,6 +77,39 @@ class ProfileChangesStream(DecentralandStreamAPIStream):
     ) -> Optional[Union[datetime, Any]]:
         one_day_ago = utc_now() - timedelta(hours=24)
         return int(one_day_ago.timestamp() * 1000)
+
+    def request_records(self, context: dict) -> Iterable[dict]:
+        paginator = self.get_new_paginator()
+        decorated_request = self.request_decorator(self._request)
+
+        with metrics.http_request_counter(self.name, self.path) as request_counter:
+            request_counter.context = context
+
+            while not paginator.finished:
+                prepared_request = self.prepare_request(
+                    context,
+                    next_page_token=paginator.current_value,
+                )
+                resp = decorated_request(prepared_request, context)
+                request_counter.increment()
+                self.update_sync_costs(prepared_request, resp, context)
+                yield from self.parse_response(resp)
+
+                if self.records_fetched >= self.max_rows:
+                    return
+
+                paginator.advance(resp)
+
+    def parse_response(self, response: requests.Response) -> Iterable[dict]:
+        rows = response.json().get("deltas")
+        for row in rows:
+            if self.records_fetched >= self.max_rows:
+                return
+
+            self.records_fetched += 1
+            self.last_fetched_timestamp = row['entityTimestamp']
+
+            yield row
 
     def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
         """Rename and flatten some fields"""
