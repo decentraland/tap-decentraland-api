@@ -366,7 +366,7 @@ class SceneChangesStream(DecentralandStreamAPIStream):
         next_page_token: Optional[Any] = None
     ) -> Dict[str, Any]:
         next_timestamp = datetime.strptime(
-            self.config["catalysts_start_date"], "%Y-%m-%d").timestamp()*1000
+            self.config["catalysts_start_date"], "%Y-%m-%d").timestamp() * 1000
         replication_key_value = self.get_starting_replication_key_value(
             context)
         signpost = self.get_replication_key_signpost(context)
@@ -390,7 +390,7 @@ class SceneChangesStream(DecentralandStreamAPIStream):
         self, context: Optional[dict]
     ) -> Optional[Union[datetime, Any]]:
         one_day_ago = utc_now() - timedelta(hours=24)
-        return int(one_day_ago.timestamp()*1000)
+        return int(one_day_ago.timestamp() * 1000)
 
     def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
         """Rename and flatten some fields"""

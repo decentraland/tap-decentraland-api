@@ -57,7 +57,10 @@ from tap_decentraland_api.profiles_streams import (
 )
 
 from tap_decentraland_api.worlds_stream import (
-    WorldIndexStream
+    WorldIndexStream,
+    WorldACLStream,
+    WorldPermissionsStream,
+    WorldScenesStream
 )
 
 
@@ -78,7 +81,10 @@ STREAM_TYPES = [
     ProfileChangesStream,
     CommsPeersStream,
     TemplatesStream,
-    WorldIndexStream
+    WorldIndexStream,
+    WorldACLStream,
+    WorldPermissionsStream,
+    WorldScenesStream
 ]
 
 
