@@ -56,6 +56,10 @@ from tap_decentraland_api.profiles_streams import (
     ProfileChangesStream
 )
 
+from tap_decentraland_api.worlds_stream import (
+    WorldIndexStream
+)
+
 
 STREAM_TYPES = [
     AragonProposalsStream,
@@ -73,7 +77,8 @@ STREAM_TYPES = [
     TilesStream,
     ProfileChangesStream,
     CommsPeersStream,
-    TemplatesStream
+    TemplatesStream,
+    WorldIndexStream
 ]
 
 
@@ -104,6 +109,8 @@ class TapDecentralandAPI(Tap):
                  default="https://builder-api.decentraland.org/v1"),
         Property("sync_content_after", IntegerType,
                  description="Sync content after certain snapshot date in unix timestamp", default=1680998400000),
+        Property("world_content_server_url", StringType,
+                 description="World content server URL", default="https://worlds-content-server.decentraland.org"),
     ).to_dict()
 
     def discover_streams(self) -> List[Stream]:
