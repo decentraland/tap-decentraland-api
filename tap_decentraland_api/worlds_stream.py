@@ -45,6 +45,7 @@ class WorldIndexStream(WorldContentServerStream):
 class WorldACLStream(WorldContentServerStream):
     name = "world_acl"
     parent_stream_type = WorldIndexStream
+    primary_keys = ["world_name"]
     path = "/acl"
 
     def get_url(self, context: Optional[dict]) -> str:
@@ -62,6 +63,7 @@ class WorldPermissionsStream(WorldContentServerStream):
     name = "world_permissions"
     parent_stream_type = WorldIndexStream
     path = "/world"
+    primary_keys = ["world_name"]
 
     def get_url(self, context: Optional[dict]) -> str:
         world_name = context["world_name"]
