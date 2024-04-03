@@ -52,8 +52,12 @@ class WorldACLStream(WorldContentServerStream):
         world_name = context["world_name"]
         return super().get_url(context) + f"/{world_name}"
 
+    def post_process(self, row: Dict, context: Optional[dict]) -> Optional[dict]:
+        row['world_name'] = context['world_name']
+        return row
+
     schema = PropertiesList(
-        Property("resource", StringType),
+        Property("world_name", StringType),
         Property("allowed", ArrayType(StringType)),
         Property("timestamp", StringType),
     ).to_dict()
@@ -98,6 +102,7 @@ class WorldScenesStream(WorldContentServerStream):
     path = "/entities/active"
     rest_method = "POST"
     records_jsonpath = "$[*]"
+    primary_keys = ['scene_hash']
 
     def prepare_request_payload(self, context: Optional[dict], next_page_token: Optional[Any]) -> Optional[dict]:
         return {
