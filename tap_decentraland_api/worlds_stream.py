@@ -120,7 +120,6 @@ class WorldScenesStream(WorldContentServerStream):
         result["type"] = row.get("type")
         result["pointers"] = json.dumps(row.get("pointers"))
         result["content"] = json.dumps(row.get("content"))
-        result["source"] = json.dumps(row.get("source"))
 
         # Safely accessing nested dictionaries with .get() and chaining .get() for deeper levels
         metadata = row.get("metadata", {})
@@ -132,6 +131,7 @@ class WorldScenesStream(WorldContentServerStream):
         featureToggles = metadata.get("featureToggles", {})
         tags = metadata.get("tags", {})
         worldConfiguration = metadata.get("worldConfiguration", {})
+        source = metadata.get("source", {})
 
         # Display Metadata
         result["title"] = display.get("title")
@@ -153,6 +153,7 @@ class WorldScenesStream(WorldContentServerStream):
         result["tags"] = json.dumps(tags)
         result["main"] = metadata.get("main")
         result["world_configuration"] = json.dumps(worldConfiguration)
+        result["source"] = json.dumps(source)
 
         return result
 
@@ -180,4 +181,5 @@ class WorldScenesStream(WorldContentServerStream):
         Property("tags", StringType),
         Property("main", StringType),
         Property("world_configuration", StringType),
+        Property("source", StringType),
     ).to_dict()
