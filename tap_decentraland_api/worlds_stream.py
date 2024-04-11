@@ -120,6 +120,7 @@ class WorldScenesStream(WorldContentServerStream):
         result["type"] = row.get("type")
         result["pointers"] = json.dumps(row.get("pointers"))
         result["content"] = json.dumps(row.get("content"))
+        result["source"] = json.dumps(row.get("source"))
 
         # Safely accessing nested dictionaries with .get() and chaining .get() for deeper levels
         metadata = row.get("metadata", {})
