@@ -112,7 +112,6 @@ class WorldScenesStream(WorldContentServerStream):
     def post_process(self, row: dict, context: Optional[dict]) -> Optional[dict]:
         result = {}
 
-        # Use .get() with the key and default to None if the key doesn't exist
         result["scene_hash"] = row.get("id")
         result["world_name"] = context.get("world_name") if context else None
         result["timestamp"] = row.get("timestamp")
@@ -121,7 +120,6 @@ class WorldScenesStream(WorldContentServerStream):
         result["pointers"] = json.dumps(row.get("pointers"))
         result["content"] = json.dumps(row.get("content"))
 
-        # Safely accessing nested dictionaries with .get() and chaining .get() for deeper levels
         metadata = row.get("metadata", {})
         display = metadata.get("display", {})
         contact = metadata.get("contact", {})
@@ -133,13 +131,11 @@ class WorldScenesStream(WorldContentServerStream):
         worldConfiguration = metadata.get("worldConfiguration", {})
         source = metadata.get("source", {})
 
-        # Display Metadata
         result["title"] = display.get("title")
         result["description"] = display.get("description")
         result["thumbnail"] = display.get("navmapThumbnail")
         result["favicon"] = display.get("favicon")
 
-        # Contact Metadata
         result["contact_name"] = contact.get("name")
         result["contact_email"] = contact.get("email")
 
@@ -154,6 +150,19 @@ class WorldScenesStream(WorldContentServerStream):
         result["main"] = metadata.get("main")
         result["world_configuration"] = json.dumps(worldConfiguration)
         result["source"] = json.dumps(source)
+
+        # Remove fields that are already in the schema
+        metadata.pop("display", None)
+        metadata.pop("contact", None)
+        metadata.pop("scene", None)
+        metadata.pop("spawnPoints", None)
+        metadata.pop("requiredPermissions", None)
+        metadata.pop("featureToggles", None)
+        metadata.pop("tags", None)
+        metadata.pop("worldConfiguration", None)
+        metadata.pop("source", None)
+
+        result["metadata"] = json.dumps(metadata)
 
         return result
 
@@ -182,4 +191,5 @@ class WorldScenesStream(WorldContentServerStream):
         Property("main", StringType),
         Property("world_configuration", StringType),
         Property("source", StringType),
+        Property("metadata", StringType),
     ).to_dict()

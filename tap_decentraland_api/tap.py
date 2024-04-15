@@ -38,8 +38,10 @@ from tap_decentraland_api.places_streams import (
 from tap_decentraland_api.scenes_streams import (
     ContentSnapshotStream,
     SceneChangesStream,
+    SceneChangesStreamV2,
     SceneMappingStream,
-    SceneStream
+    SceneStream,
+    BuilderSceneMetadataStream
 )
 
 from tap_decentraland_api.builder_streams import (
@@ -74,6 +76,8 @@ STREAM_TYPES = [
     SceneMappingStream,
     SceneStream,
     SceneChangesStream,
+    SceneChangesStreamV2,
+    BuilderSceneMetadataStream,
     SnapshotProposalsStream,
     SnapshotVotesStream,
     SmartItemsStream,
@@ -117,6 +121,8 @@ class TapDecentralandAPI(Tap):
                  description="Sync content after certain snapshot date in unix timestamp", default=1680998400000),
         Property("world_content_server_url", StringType,
                  description="World content server URL", default="https://worlds-content-server.decentraland.org"),
+        Property("builder_assetpacks_url", StringType,
+                 description="Builder Asset Packs URL", default="https://builder-assetpacks-prd-bf9fae6.s3.amazonaws.com")
     ).to_dict()
 
     def discover_streams(self) -> List[Stream]:
