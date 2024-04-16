@@ -503,10 +503,6 @@ class SceneChangesStreamV2(DecentralandStreamAPIStream):
         row['entity_timestamp'] = int(row['entityTimestamp'])
         row['local_timestamp'] = int(row['localTimestamp'])
 
-        # Validate metadata is an object.
-        if not isinstance(row.get('metadata'), dict):
-            row['metadata'] = {}
-
         row['metadata'] = json.dumps(row.get('metadata', {}))
 
         return row
@@ -519,7 +515,10 @@ class SceneChangesStreamV2(DecentralandStreamAPIStream):
 
         metadata = json.loads(metadata)
 
-        # Obtain the origin and builder_project_id
+        # Obtain the origin and builder_project_id only if metadata is present and is a dict.
+        if not isinstance(metadata, dict):
+            return None
+
         origin = metadata.get("source", {}).get("origin")
 
         if origin is None or origin != "builder":
