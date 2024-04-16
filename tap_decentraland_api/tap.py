@@ -40,8 +40,7 @@ from tap_decentraland_api.scenes_streams import (
     SceneChangesStream,
     SceneChangesStreamV2,
     SceneMappingStream,
-    SceneStream,
-    BuilderSceneMetadataStream
+    SceneStream
 )
 
 from tap_decentraland_api.builder_streams import (
@@ -77,7 +76,6 @@ STREAM_TYPES = [
     SceneStream,
     SceneChangesStream,
     SceneChangesStreamV2,
-    BuilderSceneMetadataStream,
     SnapshotProposalsStream,
     SnapshotVotesStream,
     SmartItemsStream,

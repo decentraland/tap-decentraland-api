@@ -507,36 +507,6 @@ class SceneChangesStreamV2(DecentralandStreamAPIStream):
 
         return row
 
-    def get_child_context(self, record: dict, context: Optional[dict]) -> dict:
-        """Return a context dictionary for child streams."""
-
-        # Parse record.metadata as json
-        metadata = record.get("metadata", {})
-
-        metadata = json.loads(metadata)
-
-        # Obtain the origin and builder_project_id only if metadata is present and is a dict.
-        if not isinstance(metadata, dict):
-            return None
-
-        origin = metadata.get("source", {}).get("origin")
-
-        if origin is None or origin != "builder":
-            return None
-
-        builder_project_id = metadata.get(
-            "source", {}).get("projectId")
-
-        if builder_project_id is None:
-            return None
-
-        scene_hash = record.get("scene_hash")
-
-        return {
-            "builder_project_id": builder_project_id,
-            "scene_hash": scene_hash
-        }
-
     schema = PropertiesList(
         Property("scene_hash", StringType, required=True),
         Property("type", StringType),
@@ -545,43 +515,4 @@ class SceneChangesStreamV2(DecentralandStreamAPIStream):
         Property("type", StringType),
         Property("version", StringType),
         Property("metadata", StringType),
-    ).to_dict()
-
-
-class BuilderSceneMetadataStream(DecentralandStreamAPIStream):
-    name = 'builder_scenes'
-    parent_stream_type = SceneChangesStreamV2
-    path = "/projects"
-    primary_keys = ["scene_hash", "builder_project_id"]
-
-    @property
-    def url_base(self) -> str:
-        """Return the API URL root, configurable via tap settings."""
-        return self.config["builder_assetpacks_url"]
-
-    def get_url(self, context: Optional[dict]) -> str:
-        builder_project_id = context["builder_project_id"]
-        return super().get_url(context) + f"/{builder_project_id}/manifest.json"
-
-    def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
-        result = {}
-
-        # sdk_version (if scene.sdk6 is present in the manifest then sdk_version is 6, if sdk7 is present then sdk_version is 7)
-        sdk6 = row.get("scene", {}).get("sdk6")
-        sdk7 = row.get("scene", {}).get("sdk7")
-
-        if sdk6:
-            result["sdk_version"] = 6
-        elif sdk7:
-            result["sdk_version"] = 7
-
-        result['builder_project_id'] = context['builder_project_id']
-        result['scene_hash'] = context['scene_hash']
-
-        return result
-
-    schema = PropertiesList(
-        Property("sdk_version", IntegerType),
-        Property("builder_project_id", StringType),
-        Property("scene_hash", StringType)
     ).to_dict()
