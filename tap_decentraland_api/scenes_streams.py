@@ -26,8 +26,8 @@ SCHEMAS_DIR = Path(__file__).parent / Path("./schemas")
 
 def processSceneMetadata(metadata):
     if 'tags' in metadata:
-        # Tags are dumped as json
         metadata['tags'] = json.dumps(metadata['tags'])
+
     if 'scene' in metadata:
         # These are dumped as json
         if 'parcels' in metadata['scene']:
@@ -35,6 +35,7 @@ def processSceneMetadata(metadata):
                 metadata['scene']['parcels'])
         if 'base' in metadata['scene']:
             metadata['scene']['base'] = json.dumps(metadata['scene']['base'])
+
     if 'policy' in metadata and metadata['policy'] is not None:
         # Blacklist dumped as json
         if 'blacklist' in metadata['policy']:
@@ -346,11 +347,8 @@ class SceneStream(DecentralandStreamAPIStream):
 
 
 class SceneChangesStream(DecentralandStreamAPIStream):
-
     name = "scene_changes"
-
     path = "/content/pointer-changes"
-
     primary_keys = ['scene_hash']
     replication_method = "INCREMENTAL"
     replication_key = "entityTimestamp"
@@ -401,7 +399,6 @@ class SceneChangesStream(DecentralandStreamAPIStream):
         row['entityTimestamp'] = int(row['entityTimestamp'])
         row['localTimestamp'] = int(row['localTimestamp'])
 
-        # Flatten some properties into json strings
         metadata = row.get('metadata')
         if metadata:
             row['metadata'] = processSceneMetadata(metadata)
@@ -450,4 +447,138 @@ class SceneChangesStream(DecentralandStreamAPIStream):
 
         )),
 
+    ).to_dict()
+
+
+class SceneChangesStreamV2(DecentralandStreamAPIStream):
+    name = "scene_changes_v2"
+    path = "/content/pointer-changes"
+    primary_keys = ['scene_hash']
+    replication_method = "INCREMENTAL"
+    replication_key = "entityTimestamp"
+    is_sorted = True
+    records_jsonpath: str = "$.deltas[*]"
+    next_page_token_jsonpath: str = "$.deltas[-1:].entityTimestamp"
+    RESULTS_PER_PAGE = 500
+    last_id = None
+
+    def get_url_params(
+        self,
+        context: Optional[dict],
+        next_page_token: Optional[Any] = None
+    ) -> Dict[str, Any]:
+        next_timestamp = datetime.strptime(
+            self.config["catalysts_start_date"], "%Y-%m-%d").timestamp() * 1000
+        replication_key_value = self.get_starting_replication_key_value(
+            context)
+        signpost = self.get_replication_key_signpost(context)
+
+        if next_page_token:
+            next_timestamp = next_page_token
+        elif replication_key_value:
+            next_timestamp = replication_key_value
+
+        return {
+            "limit": self.RESULTS_PER_PAGE,
+            "from": next_timestamp,
+            "to": signpost,
+            "sortingOrder": "ASC",
+            "sortingField": "entity_timestamp",
+            "entityType": "scene",
+            "lastId": self.last_id
+        }
+
+    def get_replication_key_signpost(
+        self, context: Optional[dict]
+    ) -> Optional[Union[datetime, Any]]:
+        one_day_ago = utc_now() - timedelta(hours=24)
+        return int(one_day_ago.timestamp() * 1000)
+
+    def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
+        """Rename and flatten some fields"""
+        row['scene_hash'] = row['entityId']
+        self.last_id = row['scene_hash']
+        del row['entityId']
+
+        row['entityTimestamp'] = int(row['entityTimestamp'])
+        row['localTimestamp'] = int(row['localTimestamp'])
+
+        row['metadata'] = json.dumps(row.get('metadata', {}))
+
+        return row
+
+    def get_child_context(self, record: dict, context: Optional[dict]) -> dict:
+        """Return a context dictionary for child streams."""
+
+        # Parse record.metadata as json
+        metadata = record.get("metadata", {})
+
+        metadata = json.loads(metadata)
+
+        # Obtain the origin and builder_project_id
+        origin = metadata.get("source", {}).get("origin")
+
+        if origin is None or origin != "builder":
+            return None
+
+        builder_project_id = metadata.get(
+            "source", {}).get("projectId")
+
+        if builder_project_id is None:
+            return None
+
+        scene_hash = record.get("scene_hash")
+
+        return {
+            "builder_project_id": builder_project_id,
+            "scene_hash": scene_hash
+        }
+
+    schema = PropertiesList(
+        Property("scene_hash", StringType, required=True),
+        Property("type", StringType),
+        Property("localTimestamp", IntegerType),
+        Property("entityTimestamp", IntegerType),
+        Property("type", StringType),
+        Property("version", StringType),
+        Property("metadata", StringType),
+    ).to_dict()
+
+
+class BuilderSceneMetadataStream(DecentralandStreamAPIStream):
+    name = 'builder_scenes'
+    parent_stream_type = SceneChangesStreamV2
+    path = "/projects"
+    primary_keys = ["scene_hash", "builder_project_id"]
+
+    @property
+    def url_base(self) -> str:
+        """Return the API URL root, configurable via tap settings."""
+        return self.config["builder_assetpacks_url"]
+
+    def get_url(self, context: Optional[dict]) -> str:
+        builder_project_id = context["builder_project_id"]
+        return super().get_url(context) + f"/{builder_project_id}/manifest.json"
+
+    def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
+        result = {}
+
+        # sdk_version (if scene.sdk6 is present in the manifest then sdk_version is 6, if sdk7 is present then sdk_version is 7)
+        sdk6 = row.get("scene", {}).get("sdk6")
+        sdk7 = row.get("scene", {}).get("sdk7")
+
+        if sdk6:
+            result["sdk_version"] = 6
+        elif sdk7:
+            result["sdk_version"] = 7
+
+        result['builder_project_id'] = context['builder_project_id']
+        result['scene_hash'] = context['scene_hash']
+
+        return result
+
+    schema = PropertiesList(
+        Property("sdk_version", IntegerType),
+        Property("builder_project_id", StringType),
+        Property("scene_hash", StringType)
     ).to_dict()
