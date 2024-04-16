@@ -42,7 +42,6 @@ class ProfileChangesStream(DecentralandStreamAPIStream):
     next_page_token_jsonpath: str = "$.deltas[-1:].entityTimestamp"
     RESULTS_PER_PAGE = 500
     last_id = None
-    max_rows = 5000
     records_fetched = 0
     last_fetched_timestamp = None
 
@@ -95,7 +94,10 @@ class ProfileChangesStream(DecentralandStreamAPIStream):
                 self.update_sync_costs(prepared_request, resp, context)
                 yield from self.parse_response(resp)
 
-                if self.records_fetched >= self.max_rows:
+                # Check if max rows is set in config
+                max_rows = self.config.get("profile_stream_max_rows", None)
+
+                if max_rows and self.records_fetched >= max_rows:
                     return
 
                 paginator.advance(resp)
@@ -103,7 +105,10 @@ class ProfileChangesStream(DecentralandStreamAPIStream):
     def parse_response(self, response: requests.Response) -> Iterable[dict]:
         rows = response.json().get("deltas")
         for row in rows:
-            if self.records_fetched >= self.max_rows:
+            # Check if max rows is set in config
+            max_rows = self.config.get("profile_stream_max_rows", None)
+
+            if max_rows and self.records_fetched >= max_rows:
                 return
 
             self.records_fetched += 1
