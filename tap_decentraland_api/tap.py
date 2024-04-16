@@ -122,7 +122,9 @@ class TapDecentralandAPI(Tap):
         Property("world_content_server_url", StringType,
                  description="World content server URL", default="https://worlds-content-server.decentraland.org"),
         Property("builder_assetpacks_url", StringType,
-                 description="Builder Asset Packs URL", default="https://builder-assetpacks-prd-bf9fae6.s3.amazonaws.com")
+                 description="Builder Asset Packs URL", default="https://builder-assetpacks-prd-bf9fae6.s3.amazonaws.com"),
+        Property("profile_stream_max_rows", IntegerType,
+                 description="Max rows to fetch from profile changes stream"),
     ).to_dict()
 
     def discover_streams(self) -> List[Stream]:
