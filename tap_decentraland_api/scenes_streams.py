@@ -500,8 +500,8 @@ class SceneChangesStreamV2(DecentralandStreamAPIStream):
         self.last_id = row['scene_hash']
         del row['entityId']
 
-        row['entityTimestamp'] = int(row['entityTimestamp'])
-        row['localTimestamp'] = int(row['localTimestamp'])
+        row['entity_timestamp'] = int(row['entityTimestamp'])
+        row['local_timestamp'] = int(row['localTimestamp'])
 
         row['metadata'] = json.dumps(row.get('metadata', {}))
 
@@ -537,8 +537,8 @@ class SceneChangesStreamV2(DecentralandStreamAPIStream):
     schema = PropertiesList(
         Property("scene_hash", StringType, required=True),
         Property("type", StringType),
-        Property("localTimestamp", IntegerType),
-        Property("entityTimestamp", IntegerType),
+        Property("local_timestamp", IntegerType),
+        Property("entity_timestamp", IntegerType),
         Property("type", StringType),
         Property("version", StringType),
         Property("metadata", StringType),
