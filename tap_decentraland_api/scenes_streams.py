@@ -503,6 +503,10 @@ class SceneChangesStreamV2(DecentralandStreamAPIStream):
         row['entity_timestamp'] = int(row['entityTimestamp'])
         row['local_timestamp'] = int(row['localTimestamp'])
 
+        # Validate metadata is an object.
+        if not isinstance(row.get('metadata'), dict):
+            row['metadata'] = {}
+
         row['metadata'] = json.dumps(row.get('metadata', {}))
 
         return row
