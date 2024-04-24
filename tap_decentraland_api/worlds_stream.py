@@ -102,7 +102,6 @@ class WorldScenesStream(WorldContentServerStream):
     path = "/entities/active"
     rest_method = "POST"
     records_jsonpath = "$[*]"
-    primary_keys = ['scene_hash']
 
     def prepare_request_payload(self, context: Optional[dict], next_page_token: Optional[Any]) -> Optional[dict]:
         return {
@@ -163,6 +162,8 @@ class WorldScenesStream(WorldContentServerStream):
         metadata.pop("source", None)
 
         result["metadata"] = json.dumps(metadata)
+
+        result["snapshot_at"] = datetime.now().isoformat()
 
         return result
 
