@@ -74,8 +74,12 @@ class ProfileChangesStream(DecentralandStreamAPIStream):
     def get_replication_key_signpost(
         self, context: Optional[dict]
     ) -> Optional[Union[datetime, Any]]:
-        one_day_ago = utc_now() - timedelta(hours=24)
-        return int(one_day_ago.timestamp() * 1000)
+        # Get one day after the initial timestamp
+        next_timestamp = datetime.strptime(
+            self.config["catalysts_start_date"], "%Y-%m-%d").timestamp() * 1000
+
+        # Next timestamp plus one month
+        return next_timestamp + 2592000000
 
     def request_records(self, context: dict) -> Iterable[dict]:
         paginator = self.get_new_paginator()
