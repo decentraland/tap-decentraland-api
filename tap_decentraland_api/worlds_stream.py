@@ -74,6 +74,7 @@ class WorldPermissionsStream(WorldContentServerStream):
                 Property("wallets", ArrayType(StringType))
             ))
         )),
+        Property('snapshot_at', StringType)
     ).to_dict()
 
 
@@ -174,4 +175,5 @@ class WorldScenesStream(WorldContentServerStream):
         Property("world_configuration", StringType),
         Property("source", StringType),
         Property("metadata", StringType),
+        Property('snapshot_at', StringType)
     ).to_dict()
