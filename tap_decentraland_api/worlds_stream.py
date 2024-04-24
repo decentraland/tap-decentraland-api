@@ -42,32 +42,10 @@ class WorldIndexStream(WorldContentServerStream):
     ).to_dict()
 
 
-class WorldACLStream(WorldContentServerStream):
-    name = "world_acl"
-    parent_stream_type = WorldIndexStream
-    primary_keys = ["world_name"]
-    path = "/acl"
-
-    def get_url(self, context: Optional[dict]) -> str:
-        world_name = context["world_name"]
-        return super().get_url(context) + f"/{world_name}"
-
-    def post_process(self, row: Dict, context: Optional[dict]) -> Optional[dict]:
-        row['world_name'] = context['world_name']
-        return row
-
-    schema = PropertiesList(
-        Property("world_name", StringType),
-        Property("allowed", ArrayType(StringType)),
-        Property("timestamp", StringType),
-    ).to_dict()
-
-
 class WorldPermissionsStream(WorldContentServerStream):
     name = "world_permissions"
     parent_stream_type = WorldIndexStream
     path = "/world"
-    primary_keys = ["world_name"]
 
     def get_url(self, context: Optional[dict]) -> str:
         world_name = context["world_name"]
@@ -75,6 +53,9 @@ class WorldPermissionsStream(WorldContentServerStream):
 
     def post_process(self, row: Dict, context: Optional[dict]) -> Optional[dict]:
         row['world_name'] = context['world_name']
+
+        row['snapshot_at'] = datetime.now().isoformat()
+
         return row
 
     schema = PropertiesList(
