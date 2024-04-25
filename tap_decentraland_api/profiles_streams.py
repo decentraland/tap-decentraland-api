@@ -139,11 +139,17 @@ class ProfileChangesStream(DecentralandStreamAPIStream):
         row['wallet_id'] = row['pointers'][0].lower()  # This is the user address.
 
         if row['metadata']:
-            row['name'] = row['metadata']['avatars'][0].get(
-                'name') if 'name' in row['metadata']['avatars'][0] else ""
-            row['description'] = row['metadata']['avatars'][0].get(
-                'description') if 'description' in row['metadata']['avatars'][0] else ""
-            row['avatar'] = json.dumps(row['metadata']['avatars'][0]['avatar'])
+            # Extract avatar if it exists
+            avatar = row['metadata'].get('avatars', None)
+
+            if (avatar and len(avatar) > 0):
+                row['name'] = avatar[0].get('name', "")
+                row['description'] = avatar[0].get('description', "")
+                row['avatar'] = json.dumps(avatar[0]['avatar'])
+            else:
+                row['name'] = ""
+                row['description'] = ""
+                row['avatar'] = ""
 
         row['deployer_address'] = row['deployerAddress'].lower()
         row['version'] = row['version']
