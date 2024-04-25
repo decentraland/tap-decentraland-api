@@ -153,7 +153,7 @@ class WorldScenesStream(WorldContentServerStream):
 
         result["metadata"] = json.dumps(metadata)
 
-        row['snapshot_at'] = self.snapshot_timestamp
+        result['snapshot_at'] = self.snapshot_timestamp
 
         return result
 
