@@ -19,10 +19,9 @@ class WorldContentServerStream(RESTStream):
     def url_base(self) -> str:
         return self.config["world_content_server_url"]
 
-    def __init__(self, tap: PluginBase, name: str | None = None, schema: Dict[str, Any] | Schema | None = None, path: str | None = None) -> None:
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.snapshot_timestamp = datetime.now().isoformat()
-
-        super().__init__(tap, name, schema, path)
 
 
 class WorldIndexStream(WorldContentServerStream):
