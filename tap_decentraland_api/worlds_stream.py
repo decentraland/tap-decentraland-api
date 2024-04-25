@@ -1,5 +1,7 @@
 from datetime import datetime
-from singer_sdk import RESTStream
+from singer_sdk import PluginBase, RESTStream
+from singer_sdk._singerlib import Schema
+from singer_sdk.plugin_base import PluginBase as TapBaseClass
 from singer_sdk.typing import (
     PropertiesList,
     StringType,
@@ -16,6 +18,11 @@ class WorldContentServerStream(RESTStream):
     @property
     def url_base(self) -> str:
         return self.config["world_content_server_url"]
+
+    def __init__(self, tap: PluginBase, name: str | None = None, schema: Dict[str, Any] | Schema | None = None, path: str | None = None) -> None:
+        self.snapshot_timestamp = datetime.now().isoformat()
+
+        super().__init__(tap, name, schema, path)
 
 
 class WorldIndexStream(WorldContentServerStream):
@@ -46,6 +53,7 @@ class WorldPermissionsStream(WorldContentServerStream):
     name = "world_permissions"
     parent_stream_type = WorldIndexStream
     path = "/world"
+    primary_keys = ["world_name", "snapshot_at"]
 
     def get_url(self, context: Optional[dict]) -> str:
         world_name = context["world_name"]
@@ -54,7 +62,7 @@ class WorldPermissionsStream(WorldContentServerStream):
     def post_process(self, row: Dict, context: Optional[dict]) -> Optional[dict]:
         row['world_name'] = context['world_name']
 
-        row['snapshot_at'] = datetime.now().isoformat()
+        row['snapshot_at'] = self.snapshot_timestamp
 
         return row
 
@@ -84,6 +92,7 @@ class WorldScenesStream(WorldContentServerStream):
     path = "/entities/active"
     rest_method = "POST"
     records_jsonpath = "$[*]"
+    primary_keys = ["world_name", "snapshot_at"]
 
     def prepare_request_payload(self, context: Optional[dict], next_page_token: Optional[Any]) -> Optional[dict]:
         return {
@@ -145,7 +154,7 @@ class WorldScenesStream(WorldContentServerStream):
 
         result["metadata"] = json.dumps(metadata)
 
-        result["snapshot_at"] = datetime.now().isoformat()
+        row['snapshot_at'] = self.snapshot_timestamp
 
         return result
 
