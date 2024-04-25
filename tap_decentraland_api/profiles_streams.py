@@ -54,7 +54,6 @@ class ProfileChangesStream(DecentralandStreamAPIStream):
             self.config["catalysts_start_date"], "%Y-%m-%d").timestamp() * 1000
         replication_key_value = self.get_starting_replication_key_value(
             context)
-        signpost = self.get_replication_key_signpost(context)
 
         if next_page_token:
             next_timestamp = next_page_token
@@ -64,22 +63,12 @@ class ProfileChangesStream(DecentralandStreamAPIStream):
         return {
             "limit": self.RESULTS_PER_PAGE,
             "from": next_timestamp,
-            "to": signpost,
+            "to": next_timestamp + 2592000000,
             "sortingOrder": "ASC",
             "sortingField": "entity_timestamp",
             "entityType": "profile",
             "lastId": self.last_id
         }
-
-    def get_replication_key_signpost(
-        self, context: Optional[dict]
-    ) -> Optional[Union[datetime, Any]]:
-        # Get one day after the initial timestamp
-        next_timestamp = datetime.strptime(
-            self.config["catalysts_start_date"], "%Y-%m-%d").timestamp() * 1000
-
-        # Next timestamp plus one month
-        return next_timestamp + 2592000000
 
     def request_records(self, context: dict) -> Iterable[dict]:
         paginator = self.get_new_paginator()
