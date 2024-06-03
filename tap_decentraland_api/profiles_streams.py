@@ -17,6 +17,7 @@ from singer_sdk.typing import (
     PropertiesList,
     Property,
     StringType,
+    BooleanType,
 )
 
 SCHEMAS_DIR = Path(__file__).parent / Path("./schemas")
@@ -146,6 +147,11 @@ class ProfileChangesStream(DecentralandStreamAPIStream):
                 row['name'] = avatar[0].get('name', "")
                 row['description'] = avatar[0].get('description', "")
                 row['avatar'] = json.dumps(avatar[0]['avatar'])
+                row['has_claimed_name'] = avatar[0].get('hasClaimedName', False)
+                row['avatar_version'] = str(avatar[0].get('version', ""))
+                row['user_id'] = avatar[0].get('userId', "")
+                row['eth_address'] = avatar[0].get('ethAddress', "")
+                row['has_connected_web3'] = avatar[0].get('hasConnectedWeb3', False)
             else:
                 row['name'] = ""
                 row['description'] = ""
@@ -153,7 +159,6 @@ class ProfileChangesStream(DecentralandStreamAPIStream):
 
         row['deployer_address'] = row['deployerAddress'].lower()
         row['version'] = row['version']
-        row['deployment_id'] = row['deploymentId']
 
         return row
 
@@ -167,4 +172,9 @@ class ProfileChangesStream(DecentralandStreamAPIStream):
         Property("avatar", StringType),
         Property("deployer_address", StringType),
         Property("version", StringType),
+        Property("has_claimed_name", BooleanType),
+        Property("avatar_version", StringType),
+        Property("user_id", StringType),
+        Property("eth_address", StringType),
+        Property("has_connected_web3", BooleanType),
     ).to_dict()
