@@ -63,6 +63,10 @@ from tap_decentraland_api.worlds_stream import (
     WorldScenesStream
 )
 
+from tap_decentraland_api.stores_stream import (
+    StoreChangesStream
+)
+
 
 STREAM_TYPES = [
     AragonProposalsStream,
@@ -84,7 +88,8 @@ STREAM_TYPES = [
     TemplatesStream,
     WorldIndexStream,
     WorldPermissionsStream,
-    WorldScenesStream
+    WorldScenesStream,
+    StoreChangesStream
 ]
 
 
@@ -121,6 +126,8 @@ class TapDecentralandAPI(Tap):
                  description="Builder Asset Packs URL", default="https://builder-assetpacks-prd-bf9fae6.s3.amazonaws.com"),
         Property("profile_stream_max_rows", IntegerType,
                  description="Max rows to fetch from profile changes stream"),
+        Property("store_stream_max_rows", IntegerType,
+                 description="Max rows to fetch from store changes stream"),
     ).to_dict()
 
     def discover_streams(self) -> List[Stream]:
