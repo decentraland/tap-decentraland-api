@@ -504,6 +504,9 @@ class SceneChangesStreamV2(DecentralandStreamAPIStream):
         row['local_timestamp'] = int(row['localTimestamp'])
 
         row['metadata'] = json.dumps(row.get('metadata', {}))
+        row['deployer_address'] = row.get('deployerAddress', '').lower()
+        row['auth_chain'] = json.dumps(row.get('authChain', {}))
+        row['deployment_id'] = str(row.get('deploymentId', ''))
 
         return row
 
@@ -515,4 +518,7 @@ class SceneChangesStreamV2(DecentralandStreamAPIStream):
         Property("type", StringType),
         Property("version", StringType),
         Property("metadata", StringType),
+        Property("deployer_address", StringType),
+        Property("auth_chain", StringType),
+        Property("deployment_id", StringType),
     ).to_dict()
