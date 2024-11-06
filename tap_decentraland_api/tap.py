@@ -67,6 +67,9 @@ from tap_decentraland_api.stores_stream import (
     StoreChangesStream
 )
 
+from tap_decentraland_api.badges_streams import (
+    BadgesMetadataStream
+)
 
 STREAM_TYPES = [
     AragonProposalsStream,
@@ -89,7 +92,8 @@ STREAM_TYPES = [
     WorldIndexStream,
     WorldPermissionsStream,
     WorldScenesStream,
-    StoreChangesStream
+    StoreChangesStream,
+    BadgesMetadataStream,
 ]
 
 
@@ -118,6 +122,8 @@ class TapDecentralandAPI(Tap):
         Property("scenes_per_run", IntegerType, default=2000),
         Property("builder_api_url", StringType,
                  default="https://builder-api.decentraland.org/v1"),
+        Property("badges_url", StringType,
+                 default="https://badges.decentraland.org"),
         Property("sync_content_after", IntegerType,
                  description="Sync content after certain snapshot date in unix timestamp", default=1680998400000),
         Property("world_content_server_url", StringType,
