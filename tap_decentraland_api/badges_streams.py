@@ -19,7 +19,7 @@ class BadgesStream(RESTStream):
 class BadgesMetadataStream(BadgesStream):
     name = "badges_metadata"
     path = "/badges"
-    primary_keys = ["badge_id", "tier_id"]
+    primary_keys = ["badge_id"]
     records_jsonpath = "$.data[*]"
     replication_key = None
     schema = PropertiesList(
