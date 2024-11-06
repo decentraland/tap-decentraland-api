@@ -4,6 +4,8 @@ from singer_sdk.typing import (
     PropertiesList,
     Property,
     StringType,
+    ArrayType,
+    ObjectType
 )
 
 
@@ -25,9 +27,12 @@ class BadgesMetadataStream(BadgesStream):
         Property("badge_name", StringType),
         Property("badge_category", StringType),
         Property("badge_description", StringType),
-        Property("tier_id", StringType, required=False),
-        Property("tier_name", StringType, required=False),
-        Property("tier_description", StringType, required=False)
+        Property("tiers", ArrayType(ObjectType(
+            Property("tier_id", StringType, required=False),
+            Property("tier_name", StringType, required=False),
+            Property("tier_description", StringType, required=False)
+        ))),
+
     ).to_dict()
 
     def parse_response(self, response) -> Iterable[dict]:
@@ -39,13 +44,18 @@ class BadgesMetadataStream(BadgesStream):
                 "badge_id": row.get("id"),
                 "badge_name": row.get("name"),
                 "badge_category": row.get("category"),
-                "badge_description": row.get("description")
+                "badge_description": row.get("description"),
+                "tiers": []
             }
 
             if row.get("tiers"):
                 for tier in row.get("tiers"):
-                    result["tier_id"] = tier.get("tierId")
-                    result["tier_name"] = tier.get("tierName")
-                    result["tier_description"] = tier.get("description")
+                    tier = {
+                        "tier_id": tier.get("tierId"),
+                        "tier_name": tier.get("tierName"),
+                        "tier_description": tier.get("description")
+                    }
+
+                    result["tiers"].append(tier)
 
             yield result
