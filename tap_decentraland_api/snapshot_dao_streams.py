@@ -107,30 +107,38 @@ class SnapshotProposalsStream(SnapshotDaoStream):
         """Generate row id"""
         row['rowId'] = "|".join([row['id'],row['updated_at']])
 
-        # Escape backslashes   
-        row['snapshot_proposal']['name'] = escape_backslashes(row['snapshot_proposal'].get('name'))
-        row['snapshot_proposal']['body'] = escape_backslashes(row['snapshot_proposal'].get('body'))
-        row['snapshot_proposal']['snapshot'] = int(row['snapshot_proposal'].get('snapshot'))
+        if row.get('snapshot_proposal') is not None:
+            row['snapshot_proposal']['name'] = escape_backslashes(row['snapshot_proposal'].get('name'))
+            row['snapshot_proposal']['body'] = escape_backslashes(row['snapshot_proposal'].get('body'))
+            if row['snapshot_proposal'].get('snapshot') is not None:
+                row['snapshot_proposal']['snapshot'] = int(row['snapshot_proposal'].get('snapshot'))
+            if row['snapshot_proposal'].get('choices'):
+                row['snapshot_proposal']['choices'] = "|".join([escape_backslashes(x).replace('|', '_') for x in row['snapshot_proposal']['choices']])
+        
         row['title'] = escape_backslashes(row.get('title'))
         row['description'] = escape_backslashes(row.get('description'))
         row['enacted_description'] = escape_backslashes(row.get('enacted_description'))
-        row['configuration']['description'] = escape_backslashes(row['configuration'].get('description'))
-        row['configuration']['abstract'] = escape_backslashes(row['configuration'].get('abstract'))
-        row['configuration']['specification'] = escape_backslashes(row['configuration'].get('specification'))
-        row['configuration']['personnel'] = escape_backslashes(row['configuration'].get('personnel'))
-        row['configuration']['roadmap'] = escape_backslashes(row['configuration'].get('roadmap'))
-
-        # Convert to PSV
-        row['snapshot_proposal']['choices'] = "|".join([escape_backslashes(x).replace('|', '_') for x in row['snapshot_proposal']['choices']])
+        
+        if row.get('configuration') is not None:
+            row['configuration']['description'] = escape_backslashes(row['configuration'].get('description'))
+            row['configuration']['abstract'] = escape_backslashes(row['configuration'].get('abstract'))
+            row['configuration']['specification'] = escape_backslashes(row['configuration'].get('specification'))
+            row['configuration']['personnel'] = escape_backslashes(row['configuration'].get('personnel'))
+            row['configuration']['roadmap'] = escape_backslashes(row['configuration'].get('roadmap'))
 
         return row
 
     
     def get_child_context(self, record: dict, context: Optional[dict]) -> dict:
         """Return a context dictionary for child streams."""
+        # Handle case where snapshot_proposal might be None
+        end = None
+        if record.get('snapshot_proposal') is not None:
+            end = record['snapshot_proposal'].get('end')
+        
         return {
             "proposalId": record['id'],
-            "end": record['snapshot_proposal']['end']
+            "end": end
         }
 
     schema = PropertiesList(
@@ -203,6 +211,10 @@ class SnapshotVotesStream(SnapshotDaoChildStream):
 
         Each row emitted should be a dictionary of property names to their values.
         """
+        # Skip if end is None (proposal without snapshot_proposal data)
+        if context.get('end') is None:
+            self.logger.warn(f"Skipping votes for proposal {context.get('proposalId')}: missing end date")
+            return
 
         endDate = datetime.datetime.fromtimestamp(context['end'])
         today = datetime.datetime.now()
