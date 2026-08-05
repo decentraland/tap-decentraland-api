@@ -130,7 +130,7 @@ class StoreChangesStream(DecentralandStreamAPIStream):
         row['local_timestamp'] = int(row['localTimestamp'])
         row['store_id'] = row['pointers'][0].lower()
 
-        if row['metadata']:
+        if row.get('metadata'):
             row['description'] = row['metadata'].get('description', "")
             row['wallet_id'] = row['metadata'].get('owner', "")
             row['store_links'] = json.dumps(row['metadata'].get('links', []))
