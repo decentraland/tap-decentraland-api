@@ -20,6 +20,8 @@ from singer_sdk.typing import (
     BooleanType,
 )
 
+from tap_decentraland_api.catalyst_entity_hydration import CatalystEntityHydrationMixin
+
 SCHEMAS_DIR = Path(__file__).parent / Path("./schemas")
 
 
@@ -32,7 +34,7 @@ class DecentralandStreamAPIStream(RESTStream):
         return self.config["peer_api_url"]
 
 
-class ProfileChangesStream(DecentralandStreamAPIStream):
+class ProfileChangesStream(CatalystEntityHydrationMixin, DecentralandStreamAPIStream):
     name = "profile_changes"
     path = "/content/pointer-changes"
     primary_keys = ['profile_hash']
@@ -117,6 +119,19 @@ class ProfileChangesStream(DecentralandStreamAPIStream):
 
     def parse_response(self, response: requests.Response) -> Iterable[dict]:
         rows = response.json().get("deltas")
+
+        # /content/pointer-changes stopped embedding metadata in its delta
+        # records. Hydrate it from the entity itself, keyed on entityId (a
+        # content hash) via /content/contents/{entityId}. That endpoint
+        # resolves any entity regardless of whether it's still the active
+        # one at its pointer, unlike /content/entities/active, which only
+        # resolves currently active entities and returns nothing for
+        # profiles later superseded at the same pointer. Fetched
+        # concurrently (bounded pool) since nearly every row in a page now
+        # needs it, and this is the highest-volume of the three streams.
+        missing_ids = [row['entityId'] for row in rows if not row.get('metadata')]
+        hydrated = self._fetch_entities_metadata(missing_ids)
+
         for row in rows:
             # Check if max rows is set in config
             max_rows = self.config.get("profile_stream_max_rows", None)
@@ -126,6 +141,9 @@ class ProfileChangesStream(DecentralandStreamAPIStream):
 
             self.records_fetched += 1
             self.last_fetched_timestamp = row['entityTimestamp']
+
+            if not row.get('metadata'):
+                row['metadata'] = hydrated.get(row['entityId'])
 
             yield row
 
@@ -139,7 +157,7 @@ class ProfileChangesStream(DecentralandStreamAPIStream):
         row['local_timestamp'] = int(row['localTimestamp'])
         row['wallet_id'] = row['pointers'][0].lower()  # This is the user address.
 
-        if row['metadata']:
+        if row.get('metadata'):
             # Extract avatar if it exists
             avatar = row['metadata'].get('avatars', None)
 

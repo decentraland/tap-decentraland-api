@@ -3,13 +3,14 @@
 from datetime import datetime, timedelta
 import requests
 import json
-import backoff
 
 from pathlib import Path
 from typing import Any, Dict, Optional, Union, Iterable, cast
 from singer_sdk.helpers._util import utc_now
 
 from singer_sdk.streams import RESTStream
+
+from tap_decentraland_api.catalyst_entity_hydration import CatalystEntityHydrationMixin
 
 from singer_sdk.typing import (
     ArrayType,
@@ -171,7 +172,7 @@ class SceneMappingStream(DecentralandStreamAPIStream):
     ).to_dict()
 
 
-class SceneStream(DecentralandStreamAPIStream):
+class SceneStream(CatalystEntityHydrationMixin, DecentralandStreamAPIStream):
     name = "scene"
     path = "/content/entities/scene"
     primary_keys = ['scene_hash']
@@ -207,53 +208,6 @@ class SceneStream(DecentralandStreamAPIStream):
             yield row
 
         state['scene_hashes'].append(context['scene_hash'])
-
-    @backoff.on_exception(
-        backoff.expo,
-        (requests.exceptions.RequestException),
-        max_tries=8,
-        giveup=lambda e: e.response is not None and 400 <= e.response.status_code < 500 and e.response.status_code != 429,
-        factor=2,
-    )
-    def _request_with_backoff(
-        self, prepared_request, context: Optional[dict]
-    ) -> requests.Response:
-        response = self.requests_session.send(prepared_request)
-        if self._LOG_REQUEST_METRICS:
-            extra_tags = {}
-            if self._LOG_REQUEST_METRIC_URLS:
-                extra_tags["url"] = cast(str, prepared_request.path_url)
-            self._write_request_duration_log(
-                endpoint=self.path,
-                response=response,
-                context=context,
-                extra_tags=extra_tags,
-            )
-        if response.status_code in [401, 403]:
-            self.logger.info(
-                "Failed request for {}".format(prepared_request.url))
-            self.logger.info(
-                f"Reason: {response.status_code} - {str(response.content)}"
-            )
-            raise RuntimeError(
-                "Requested resource was unauthorized, forbidden, or not found."
-            )
-        if response.status_code == 429:
-            self.logger.info(
-                "Throttled request for {}".format(prepared_request.url))
-            raise requests.exceptions.RequestException(
-                request=prepared_request,
-                response=response
-            )
-        elif response.status_code >= 400:
-            raise RuntimeError(
-                f"Error making request to API: {prepared_request.url} "
-                f"[{response.status_code} - {str(response.content)}]".replace(
-                    "\\n", "\n"
-                )
-            )
-
-        return response
 
     def prepare_request(
         self, params: dict, context: Optional[dict], next_page_token: Optional[Any]
@@ -450,7 +404,7 @@ class SceneChangesStream(DecentralandStreamAPIStream):
     ).to_dict()
 
 
-class SceneChangesStreamV2(DecentralandStreamAPIStream):
+class SceneChangesStreamV2(CatalystEntityHydrationMixin, DecentralandStreamAPIStream):
     name = "scene_changes_v2"
     path = "/content/pointer-changes"
     primary_keys = ['scene_hash']
@@ -494,6 +448,29 @@ class SceneChangesStreamV2(DecentralandStreamAPIStream):
         one_day_ago = utc_now() - timedelta(hours=24)
         return int(one_day_ago.timestamp() * 1000)
 
+    def parse_response(self, response) -> Iterable[dict]:
+        """Parse data, hydrating metadata that /content/pointer-changes stopped embedding.
+
+        The delta records returned here no longer carry a `metadata` key.
+        Fetch it from the entity itself when missing, keyed on entityId
+        (a content hash) via /content/contents/{entityId}. That endpoint
+        resolves any entity regardless of whether it's still the active
+        one at its pointer, unlike /content/entities/scene or
+        /content/entities/active, which only resolve the currently active
+        entity and return nothing for deployments later superseded at the
+        same parcel -- the majority of records in this change feed.
+        """
+        data = response.json()
+        rows = data.get('deltas', [])
+
+        missing_ids = [row['entityId'] for row in rows if not row.get('metadata')]
+        hydrated = self._fetch_entities_metadata(missing_ids)
+
+        for row in rows:
+            if not row.get('metadata'):
+                row['metadata'] = hydrated.get(row['entityId'])
+            yield row
+
     def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
         """Rename and flatten some fields"""
         row['scene_hash'] = row['entityId']
@@ -503,7 +480,7 @@ class SceneChangesStreamV2(DecentralandStreamAPIStream):
         row['entity_timestamp'] = int(row['entityTimestamp'])
         row['local_timestamp'] = int(row['localTimestamp'])
 
-        row['metadata'] = json.dumps(row.get('metadata', {}))
+        row['metadata'] = json.dumps(row.get('metadata') or {})
         row['deployer_address'] = row.get('deployerAddress', '').lower()
         row['auth_chain'] = json.dumps(row.get('authChain', {}))
         row['deployment_id'] = str(row.get('deploymentId', ''))
