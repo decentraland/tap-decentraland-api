@@ -461,10 +461,14 @@ class SceneChangesStreamV2(CatalystEntityHydrationMixin, DecentralandStreamAPISt
         same parcel -- the majority of records in this change feed.
         """
         data = response.json()
+        rows = data.get('deltas', [])
 
-        for row in data.get('deltas', []):
+        missing_ids = [row['entityId'] for row in rows if not row.get('metadata')]
+        hydrated = self._fetch_entities_metadata(missing_ids)
+
+        for row in rows:
             if not row.get('metadata'):
-                row['metadata'] = self._fetch_entity_metadata(row['entityId'])
+                row['metadata'] = hydrated.get(row['entityId'])
             yield row
 
     def post_process(self, row: dict, context: Optional[dict] = None) -> dict:

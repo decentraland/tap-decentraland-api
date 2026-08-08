@@ -10,7 +10,8 @@ return nothing for records later superseded at the same pointer, which is
 the majority of records in these change feeds.
 """
 
-from typing import Optional, cast
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Dict, Iterable, Optional, cast
 
 import backoff
 import requests
@@ -22,6 +23,12 @@ class CatalystEntityHydrationMixin:
     Expects the host class to provide `url_base`, `requests_session`,
     `logger`, and `name` (all standard RESTStream attributes).
     """
+
+    # Bounded worker pool for concurrent hydration fetches. requests.Session
+    # is safe to share across threads for concurrent requests (urllib3's
+    # connection pool handles its own locking); each worker still goes
+    # through the same backoff-wrapped _request_with_backoff.
+    HYDRATION_MAX_WORKERS = 10
 
     @backoff.on_exception(
         backoff.expo,
@@ -100,3 +107,29 @@ class CatalystEntityHydrationMixin:
                 "even after hydration"
             )
         return metadata
+
+    def _fetch_entities_metadata(
+        self, entity_ids: Iterable[str]
+    ) -> Dict[str, Optional[dict]]:
+        """Fetch metadata for multiple entities concurrently, bounded by a worker pool.
+
+        Each fetch still goes through the same backoff/retry as a single
+        fetch; a failure for one entity doesn't affect the others.
+        """
+        unique_ids = list(dict.fromkeys(entity_ids))  # de-dupe, keep order
+        if not unique_ids:
+            return {}
+
+        results: Dict[str, Optional[dict]] = {}
+        with ThreadPoolExecutor(
+            max_workers=min(self.HYDRATION_MAX_WORKERS, len(unique_ids))
+        ) as executor:
+            future_to_id = {
+                executor.submit(self._fetch_entity_metadata, entity_id): entity_id
+                for entity_id in unique_ids
+            }
+            for future in as_completed(future_to_id):
+                entity_id = future_to_id[future]
+                results[entity_id] = future.result()
+
+        return results
